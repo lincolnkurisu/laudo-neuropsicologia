@@ -44,11 +44,12 @@ async function getPatient(id: string): Promise<PatientDetail | null> {
 }
 
 interface PatientPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function PatientPage({ params }: PatientPageProps) {
-  const patient = await getPatient(params.id);
+  const { id } = await params;
+  const patient = await getPatient(id);
   if (!patient) notFound();
 
   const age = calculateAge(patient.dateOfBirth);

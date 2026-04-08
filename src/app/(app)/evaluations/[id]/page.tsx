@@ -29,11 +29,12 @@ async function getEvaluation(id: string) {
 }
 
 interface EvaluationPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function EvaluationPage({ params }: EvaluationPageProps) {
-  const evaluation = await getEvaluation(params.id) as {
+  const { id } = await params;
+  const evaluation = await getEvaluation(id) as {
     id: string;
     title: string;
     status: string;
