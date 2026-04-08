@@ -57,6 +57,35 @@ export function classifyPercentile(percentile: number): string {
   return "Muito Superior";
 }
 
+// ─── Patient Detail (usado em patients/[id]) ─────────────────────────────────
+
+export interface PatientAnamnesisSummary {
+  id: string;
+  mainComplaint: string;
+  createdAt: Date;
+}
+
+export interface PatientEvaluationSummary {
+  id: string;
+  title: string;
+  status: EvaluationStatus;
+  createdAt: Date;
+}
+
+export interface PatientDetail {
+  id: string;
+  fullName: string;
+  dateOfBirth: Date;
+  gender: Gender;
+  educationLevel: EducationLevel;
+  occupation?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  createdAt: Date;
+  anamneses: PatientAnamnesisSummary[];
+  evaluations: PatientEvaluationSummary[];
+}
+
 // ─── Scoring Result Types ─────────────────────────────────────────────────────
 
 export interface ScoringResult<T> {

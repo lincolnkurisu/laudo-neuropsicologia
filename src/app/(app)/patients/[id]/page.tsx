@@ -7,11 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, calculateAge } from "@/lib/utils";
-import { EDUCATION_LABELS, GENDER_LABELS } from "@/types";
+import { EDUCATION_LABELS, GENDER_LABELS, type PatientDetail } from "@/types";
+import { STATUS_CONFIG } from "@/lib/constants";
 
-// Mock — substituir por Prisma
-async function getPatient(id: string) {
-  const patients: Record<string, object> = {
+// Mock — substituir por query Prisma com a sessão autenticada
+async function getPatient(id: string): Promise<PatientDetail | null> {
+  const MOCK: Record<string, PatientDetail> = {
     "1": {
       id: "1",
       fullName: "Ana Beatriz Silva",
@@ -39,7 +40,7 @@ async function getPatient(id: string) {
       ],
     },
   };
-  return patients[id] || null;
+  return MOCK[id] ?? null;
 }
 
 interface PatientPageProps {
@@ -47,20 +48,7 @@ interface PatientPageProps {
 }
 
 export default async function PatientPage({ params }: PatientPageProps) {
-  const patient = await getPatient(params.id) as {
-    id: string;
-    fullName: string;
-    dateOfBirth: Date;
-    gender: "MALE" | "FEMALE" | "OTHER";
-    educationLevel: "NO_FORMAL_EDUCATION" | "INCOMPLETE_ELEMENTARY" | "COMPLETE_ELEMENTARY" | "INCOMPLETE_HIGH_SCHOOL" | "COMPLETE_HIGH_SCHOOL" | "INCOMPLETE_HIGHER" | "COMPLETE_HIGHER" | "POSTGRADUATE";
-    occupation?: string;
-    phone?: string;
-    email?: string;
-    createdAt: Date;
-    anamneses: { id: string; mainComplaint: string; createdAt: Date }[];
-    evaluations: { id: string; title: string; status: string; createdAt: Date }[];
-  } | null;
-
+  const patient = await getPatient(params.id);
   if (!patient) notFound();
 
   const age = calculateAge(patient.dateOfBirth);
@@ -81,7 +69,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
         </div>
         <Button asChild>
           <Link href={`/evaluations/new?patientId=${patient.id}`}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             Nova Avaliação
           </Link>
         </Button>
@@ -90,15 +78,15 @@ export default async function PatientPage({ params }: PatientPageProps) {
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">
-            <User className="mr-2 h-4 w-4" />
+            <User className="mr-2 h-4 w-4" aria-hidden="true" />
             Dados
           </TabsTrigger>
           <TabsTrigger value="anamneses">
-            <ClipboardList className="mr-2 h-4 w-4" />
+            <ClipboardList className="mr-2 h-4 w-4" aria-hidden="true" />
             Anamneses ({patient.anamneses.length})
           </TabsTrigger>
           <TabsTrigger value="evaluations">
-            <FileText className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
             Avaliações ({patient.evaluations.length})
           </TabsTrigger>
         </TabsList>
@@ -113,14 +101,14 @@ export default async function PatientPage({ params }: PatientPageProps) {
             <CardContent>
               <dl className="grid grid-cols-2 gap-4">
                 {[
-                  { label: "Nome completo", value: patient.fullName },
+                  { label: "Nome completo",      value: patient.fullName },
                   { label: "Data de nascimento", value: `${formatDate(patient.dateOfBirth)} (${age} anos)` },
-                  { label: "Gênero", value: GENDER_LABELS[patient.gender] },
-                  { label: "Escolaridade", value: EDUCATION_LABELS[patient.educationLevel] },
-                  { label: "Ocupação", value: patient.occupation || "—" },
-                  { label: "Telefone", value: patient.phone || "—" },
-                  { label: "Email", value: patient.email || "—" },
-                  { label: "Cadastrado em", value: formatDate(patient.createdAt) },
+                  { label: "Gênero",             value: GENDER_LABELS[patient.gender] },
+                  { label: "Escolaridade",        value: EDUCATION_LABELS[patient.educationLevel] },
+                  { label: "Ocupação",            value: patient.occupation ?? "—" },
+                  { label: "Telefone",            value: patient.phone ?? "—" },
+                  { label: "Email",               value: patient.email ?? "—" },
+                  { label: "Cadastrado em",       value: formatDate(patient.createdAt) },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
@@ -156,14 +144,21 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </CardHeader>
             <CardContent>
               {patient.anamneses.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">Nenhuma anamnese registrada.</p>
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhuma anamnese registrada.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {patient.anamneses.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between rounded-lg border p-4">
+                    <div
+                      key={a.id}
+                      className="flex items-center justify-between rounded-lg border p-4"
+                    >
                       <div>
                         <p className="font-medium">Queixa: {a.mainComplaint}</p>
-                        <p className="text-sm text-muted-foreground">Registrada em {formatDate(a.createdAt)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Registrada em {formatDate(a.createdAt)}
+                        </p>
                       </div>
                       <Button variant="outline" size="sm" asChild>
                         <Link href={`/patients/${patient.id}/anamnesis/${a.id}`}>Ver</Link>
@@ -186,31 +181,41 @@ export default async function PatientPage({ params }: PatientPageProps) {
                   <CardDescription>Sessões de avaliação neuropsicológica.</CardDescription>
                 </div>
                 <Button asChild>
-                  <Link href={`/evaluations/new?patientId=${patient.id}`}>+ Nova Avaliação</Link>
+                  <Link href={`/evaluations/new?patientId=${patient.id}`}>
+                    + Nova Avaliação
+                  </Link>
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {patient.evaluations.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">Nenhuma avaliação iniciada.</p>
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhuma avaliação iniciada.
+                </p>
               ) : (
                 <div className="space-y-3">
-                  {patient.evaluations.map((ev) => (
-                    <div key={ev.id} className="flex items-center justify-between rounded-lg border p-4">
-                      <div>
-                        <p className="font-medium">{ev.title}</p>
-                        <p className="text-sm text-muted-foreground">Iniciada em {formatDate(ev.createdAt)}</p>
+                  {patient.evaluations.map((ev) => {
+                    const cfg = STATUS_CONFIG[ev.status];
+                    return (
+                      <div
+                        key={ev.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
+                      >
+                        <div>
+                          <p className="font-medium">{ev.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Iniciada em {formatDate(ev.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Badge variant={ev.status === "IN_PROGRESS" ? "warning" : ev.status === "COMPLETED" ? "secondary" : "success"}>
-                          {ev.status === "IN_PROGRESS" ? "Em andamento" : ev.status === "COMPLETED" ? "Concluída" : "Laudo gerado"}
-                        </Badge>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

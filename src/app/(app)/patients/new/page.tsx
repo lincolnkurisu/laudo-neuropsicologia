@@ -10,23 +10,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { EDUCATION_OPTIONS, EDUCATION_VALUES, GENDER_OPTIONS, GENDER_VALUES } from "@/lib/constants";
+import { calculateAge } from "@/lib/utils";
+
+// ─── Validação de CPF (dígitos verificadores) ─────────────────────────────────
+
+function isValidCPF(cpf: string): boolean {
+  const digits = cpf.replace(/\D/g, "");
+  if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false;
+
+  const calc = (mod: number) => {
+    let sum = 0;
+    for (let i = 0; i < mod - 1; i++) {
+      sum += parseInt(digits[i]) * (mod - i);
+    }
+    const rest = (sum * 10) % 11;
+    return rest >= 10 ? 0 : rest;
+  };
+
+  return calc(10) === parseInt(digits[9]) && calc(11) === parseInt(digits[10]);
+}
+
+// ─── Schema Zod ───────────────────────────────────────────────────────────────
 
 const patientSchema = z.object({
-  fullName: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
-  dateOfBirth: z.string().min(1, "Data de nascimento é obrigatória"),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"]),
-  educationLevel: z.enum([
-    "NO_FORMAL_EDUCATION", "INCOMPLETE_ELEMENTARY", "COMPLETE_ELEMENTARY",
-    "INCOMPLETE_HIGH_SCHOOL", "COMPLETE_HIGH_SCHOOL",
-    "INCOMPLETE_HIGHER", "COMPLETE_HIGHER", "POSTGRADUATE",
-  ]),
-  occupation: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
-  cpf: z.string().optional(),
+  fullName: z
+    .string()
+    .min(3, "Nome deve ter ao menos 3 caracteres")
+    .max(120, "Nome muito longo"),
+  dateOfBirth: z
+    .string()
+    .min(1, "Data de nascimento é obrigatória")
+    .refine((d) => !isNaN(new Date(d).getTime()), "Data inválida")
+    .refine((d) => new Date(d) < new Date(), "Data de nascimento não pode ser no futuro")
+    .refine((d) => {
+      const age = calculateAge(new Date(d));
+      return age >= 13 && age <= 120;
+    }, "Idade deve estar entre 13 e 120 anos"),
+  gender: z.enum(GENDER_VALUES),
+  educationLevel: z.enum(EDUCATION_VALUES),
+  occupation: z.string().max(100).optional(),
+  phone: z
+    .string()
+    .regex(/^(\(?\d{2}\)?\s?)?(\d{4,5}[-\s]?\d{4})$/, "Telefone inválido")
+    .optional()
+    .or(z.literal("")),
+  email: z
+    .string()
+    .email("Email inválido")
+    .optional()
+    .or(z.literal("")),
+  cpf: z
+    .string()
+    .refine(
+      (v) => v === "" || isValidCPF(v),
+      "CPF inválido. Verifique os dígitos verificadores."
+    )
+    .optional()
+    .or(z.literal("")),
 });
 
 type PatientFormData = z.infer<typeof patientSchema>;
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function NewPatientPage() {
   const router = useRouter();
@@ -40,19 +86,24 @@ export default function NewPatientPage() {
   });
 
   const onSubmit = async (data: PatientFormData) => {
-    try {
-      const res = await fetch("/api/patients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Erro ao cadastrar paciente");
-      const patient = await res.json();
-      router.push(`/patients/${patient.id}`);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao salvar. Verifique os dados e tente novamente.");
+    const res = await fetch("/api/patients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      const msg =
+        res.status === 409
+          ? "CPF já cadastrado para outro paciente."
+          : body?.error ?? "Erro ao salvar. Verifique os dados e tente novamente.";
+      alert(msg);
+      return;
     }
+
+    const patient = await res.json();
+    router.push(`/patients/${patient.id}`);
   };
 
   return (
@@ -62,66 +113,105 @@ export default function NewPatientPage() {
         <p className="text-muted-foreground">Preencha os dados cadastrais do paciente.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         {/* Dados pessoais */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Dados Pessoais</CardTitle>
-            <CardDescription>Informações demográficas fundamentais para a normatização dos testes.</CardDescription>
+            <CardDescription>
+              Informações demográficas fundamentais para a normatização dos testes.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Nome */}
             <div className="space-y-2">
               <Label htmlFor="fullName">Nome completo *</Label>
-              <Input id="fullName" {...register("fullName")} placeholder="Ex: Maria da Silva Souza" />
-              {errors.fullName && <p className="text-sm text-destructive">{errors.fullName.message}</p>}
+              <Input
+                id="fullName"
+                {...register("fullName")}
+                placeholder="Ex: Maria da Silva Souza"
+                aria-invalid={!!errors.fullName}
+                aria-describedby={errors.fullName ? "fullName-error" : undefined}
+              />
+              {errors.fullName && (
+                <p id="fullName-error" className="text-sm text-destructive" role="alert">
+                  {errors.fullName.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              {/* Data de nascimento */}
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Data de nascimento *</Label>
-                <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
-                {errors.dateOfBirth && <p className="text-sm text-destructive">{errors.dateOfBirth.message}</p>}
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  {...register("dateOfBirth")}
+                  max={new Date().toISOString().split("T")[0]}
+                  aria-invalid={!!errors.dateOfBirth}
+                  aria-describedby={errors.dateOfBirth ? "dob-error" : undefined}
+                />
+                {errors.dateOfBirth && (
+                  <p id="dob-error" className="text-sm text-destructive" role="alert">
+                    {errors.dateOfBirth.message}
+                  </p>
+                )}
               </div>
 
+              {/* Gênero */}
               <div className="space-y-2">
-                <Label>Gênero *</Label>
-                <Select onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE" | "OTHER")}>
-                  <SelectTrigger>
+                <Label htmlFor="gender">Gênero *</Label>
+                <Select onValueChange={(v) => setValue("gender", v as PatientFormData["gender"], { shouldValidate: true })}>
+                  <SelectTrigger id="gender" aria-invalid={!!errors.gender}>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MALE">Masculino</SelectItem>
-                    <SelectItem value="FEMALE">Feminino</SelectItem>
-                    <SelectItem value="OTHER">Outro</SelectItem>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {errors.gender && <p className="text-sm text-destructive">{errors.gender.message}</p>}
+                {errors.gender && (
+                  <p className="text-sm text-destructive" role="alert">
+                    Selecione o gênero
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Escolaridade */}
             <div className="space-y-2">
-              <Label>Nível de escolaridade *</Label>
-              <Select onValueChange={(v) => setValue("educationLevel", v as PatientFormData["educationLevel"])}>
-                <SelectTrigger>
+              <Label htmlFor="educationLevel">Nível de escolaridade *</Label>
+              <Select onValueChange={(v) => setValue("educationLevel", v as PatientFormData["educationLevel"], { shouldValidate: true })}>
+                <SelectTrigger id="educationLevel" aria-invalid={!!errors.educationLevel}>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NO_FORMAL_EDUCATION">Sem escolaridade</SelectItem>
-                  <SelectItem value="INCOMPLETE_ELEMENTARY">Fundamental incompleto</SelectItem>
-                  <SelectItem value="COMPLETE_ELEMENTARY">Fundamental completo</SelectItem>
-                  <SelectItem value="INCOMPLETE_HIGH_SCHOOL">Médio incompleto</SelectItem>
-                  <SelectItem value="COMPLETE_HIGH_SCHOOL">Médio completo</SelectItem>
-                  <SelectItem value="INCOMPLETE_HIGHER">Superior incompleto</SelectItem>
-                  <SelectItem value="COMPLETE_HIGHER">Superior completo</SelectItem>
-                  <SelectItem value="POSTGRADUATE">Pós-graduação</SelectItem>
+                  {EDUCATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {errors.educationLevel && <p className="text-sm text-destructive">{errors.educationLevel.message}</p>}
+              {errors.educationLevel && (
+                <p className="text-sm text-destructive" role="alert">
+                  Selecione o nível de escolaridade
+                </p>
+              )}
             </div>
 
+            {/* Ocupação */}
             <div className="space-y-2">
               <Label htmlFor="occupation">Ocupação</Label>
-              <Input id="occupation" {...register("occupation")} placeholder="Ex: Professor, Estudante, Aposentado..." />
+              <Input
+                id="occupation"
+                {...register("occupation")}
+                placeholder="Ex: Professor, Estudante, Aposentado..."
+              />
             </div>
           </CardContent>
         </Card>
@@ -135,17 +225,52 @@ export default function NewPatientPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input id="phone" {...register("phone")} placeholder="(11) 99999-9999" />
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="(11) 99999-9999"
+                  aria-invalid={!!errors.phone}
+                  aria-describedby={errors.phone ? "phone-error" : undefined}
+                />
+                {errors.phone && (
+                  <p id="phone-error" className="text-sm text-destructive" role="alert">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" {...register("email")} placeholder="paciente@email.com" />
-                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="paciente@email.com"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
+                />
+                {errors.email && (
+                  <p id="email-error" className="text-sm text-destructive" role="alert">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="cpf">CPF</Label>
-              <Input id="cpf" {...register("cpf")} placeholder="000.000.000-00" />
+              <Input
+                id="cpf"
+                {...register("cpf")}
+                placeholder="000.000.000-00"
+                aria-invalid={!!errors.cpf}
+                aria-describedby={errors.cpf ? "cpf-error" : undefined}
+              />
+              {errors.cpf && (
+                <p id="cpf-error" className="text-sm text-destructive" role="alert">
+                  {errors.cpf.message}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -153,7 +278,12 @@ export default function NewPatientPage() {
         <Separator />
 
         <div className="flex gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+          >
             Cancelar
           </Button>
           <Button type="submit" disabled={isSubmitting}>

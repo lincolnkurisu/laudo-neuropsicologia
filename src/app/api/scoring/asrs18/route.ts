@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { scoreAsrs18 } from "@/services/scoring/asrs18";
+import type { Asrs18Input } from "@/types";
 
 const asrs18Schema = z.object({
   items: z
@@ -23,7 +24,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const result = scoreAsrs18({ items: parsed.data.items as Parameters<typeof scoreAsrs18>[0]["items"] });
+    const input: Asrs18Input = { items: parsed.data.items as Asrs18Input["items"] };
+    const result = scoreAsrs18(input);
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 422 });

@@ -62,7 +62,18 @@ export function scoreAsrs18(input: Asrs18Input): ScoringResult<Asrs18Scores> {
 
   const validationError = validateItems(items);
   if (validationError) {
-    return { scores: {} as Asrs18Scores, error: validationError };
+    return {
+      scores: {
+        scorePartA: 0,
+        scorePartB: 0,
+        totalScore: 0,
+        partAPositiveItems: 0,
+        partBPositiveItems: 0,
+        clinicalSignificant: false,
+        interpretation: "",
+      },
+      error: validationError,
+    };
   }
 
   // Divide em Parte A (índices 0-8) e Parte B (índices 9-17)
@@ -78,7 +89,9 @@ export function scoreAsrs18(input: Asrs18Input): ScoringResult<Asrs18Scores> {
   const partAPositiveItems = partA.filter((v) => v >= CLINICAL_THRESHOLD).length;
   const partBPositiveItems = partB.filter((v) => v >= CLINICAL_THRESHOLD).length;
 
-  // Decisão clínica: ambas as partes precisam atingir o corte
+  // Decisão clínica (rastreio): resultado positivo se QUALQUER dimensão atingir o corte.
+  // Raciocínio: como ferramenta de rastreio, prioriza sensibilidade (menos falsos negativos).
+  // Para critério diagnóstico mais restritivo (ambas as partes), altere || para &&.
   const clinicalSignificant =
     partAPositiveItems >= PART_A_CUTOFF || partBPositiveItems >= PART_B_CUTOFF;
 

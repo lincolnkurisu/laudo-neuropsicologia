@@ -4,26 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
-
-// Dados mockados para o MVP — substituir por queries Prisma após auth
-const mockStats = {
-  totalPatients: 12,
-  activeEvaluations: 3,
-  completedReports: 8,
-  thisMonthEvals: 5,
-};
-
-const mockRecentPatients = [
-  { id: "1", fullName: "Ana Beatriz Silva", age: 34, lastEval: new Date("2026-04-01"), status: "IN_PROGRESS" as const },
-  { id: "2", fullName: "Carlos Eduardo Mendes", age: 28, lastEval: new Date("2026-03-28"), status: "COMPLETED" as const },
-  { id: "3", fullName: "Fernanda Costa Lima", age: 45, lastEval: new Date("2026-03-20"), status: "REPORT_GENERATED" as const },
-];
-
-const STATUS_CONFIG = {
-  IN_PROGRESS:       { label: "Em andamento",  variant: "warning"   as const },
-  COMPLETED:         { label: "Concluída",      variant: "secondary" as const },
-  REPORT_GENERATED:  { label: "Laudo gerado",   variant: "success"   as const },
-};
+import { STATUS_CONFIG, MOCK_STATS, MOCK_RECENT_PATIENTS } from "@/lib/constants";
 
 export default function DashboardPage() {
   return (
@@ -32,7 +13,9 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Bem-vindo ao NeuroPsi. Aqui está um resumo da sua atividade clínica.</p>
+          <p className="text-muted-foreground">
+            Bem-vindo ao NeuroPsi. Aqui está um resumo da sua atividade clínica.
+          </p>
         </div>
         <Button asChild>
           <Link href="/patients/new">+ Novo Paciente</Link>
@@ -41,49 +24,23 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Pacientes</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.totalPatients}</div>
-            <p className="text-xs text-muted-foreground">pacientes cadastrados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avaliações Ativas</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.activeEvaluations}</div>
-            <p className="text-xs text-muted-foreground">em andamento</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Laudos Gerados</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.completedReports}</div>
-            <p className="text-xs text-muted-foreground">laudos finalizados</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockStats.thisMonthEvals}</div>
-            <p className="text-xs text-muted-foreground">novas avaliações</p>
-          </CardContent>
-        </Card>
+        {[
+          { title: "Total de Pacientes",   value: MOCK_STATS.totalPatients,    sub: "pacientes cadastrados", Icon: Users },
+          { title: "Avaliações Ativas",    value: MOCK_STATS.activeEvaluations, sub: "em andamento",         Icon: ClipboardList },
+          { title: "Laudos Gerados",       value: MOCK_STATS.completedReports, sub: "laudos finalizados",    Icon: FileText },
+          { title: "Este Mês",             value: MOCK_STATS.thisMonthEvals,   sub: "novas avaliações",      Icon: TrendingUp },
+        ].map(({ title, value, sub, Icon }) => (
+          <Card key={title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+              <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{value}</div>
+              <p className="text-xs text-muted-foreground">{sub}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Pacientes recentes */}
@@ -94,7 +51,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockRecentPatients.map((patient) => {
+            {MOCK_RECENT_PATIENTS.map((patient) => {
               const statusCfg = STATUS_CONFIG[patient.status];
               return (
                 <div

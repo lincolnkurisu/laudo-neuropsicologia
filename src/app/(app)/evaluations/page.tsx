@@ -3,14 +3,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils";
+import { STATUS_CONFIG, type EvaluationStatusKey } from "@/lib/constants";
 
-const mockEvaluations = [
+const MOCK_EVALUATIONS: Array<{
+  id: string;
+  title: string;
+  patientName: string;
+  patientId: string;
+  status: EvaluationStatusKey;
+  createdAt: Date;
+  testsApplied: string[];
+}> = [
   {
     id: "e1",
     title: "Avaliação Neuropsicológica Completa",
     patientName: "Ana Beatriz Silva",
     patientId: "1",
-    status: "IN_PROGRESS" as const,
+    status: "IN_PROGRESS",
     createdAt: new Date("2026-04-03"),
     testsApplied: ["ASRS-18", "BPA-2"],
   },
@@ -19,17 +28,11 @@ const mockEvaluations = [
     title: "Avaliação Neuropsicológica Completa",
     patientName: "Carlos Eduardo Mendes",
     patientId: "2",
-    status: "COMPLETED" as const,
+    status: "COMPLETED",
     createdAt: new Date("2026-03-28"),
     testsApplied: ["ASRS-18", "BPA-2", "WASI"],
   },
 ];
-
-const STATUS_CONFIG = {
-  IN_PROGRESS:      { label: "Em andamento", variant: "warning"   as const },
-  COMPLETED:        { label: "Concluída",     variant: "secondary" as const },
-  REPORT_GENERATED: { label: "Laudo gerado",  variant: "success"   as const },
-};
 
 export default function EvaluationsPage() {
   return (
@@ -37,12 +40,14 @@ export default function EvaluationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Avaliações</h1>
-          <p className="text-muted-foreground">{mockEvaluations.length} avaliações registradas</p>
+          <p className="text-muted-foreground">
+            {MOCK_EVALUATIONS.length} avaliações registradas
+          </p>
         </div>
       </div>
 
       <div className="grid gap-4">
-        {mockEvaluations.map((ev) => {
+        {MOCK_EVALUATIONS.map((ev) => {
           const cfg = STATUS_CONFIG[ev.status];
           return (
             <Card key={ev.id} className="hover:shadow-md transition-shadow">
@@ -54,16 +59,23 @@ export default function EvaluationsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Paciente:{" "}
-                    <Link href={`/patients/${ev.patientId}`} className="text-primary hover:underline">
+                    <Link
+                      href={`/patients/${ev.patientId}`}
+                      className="text-primary hover:underline"
+                    >
                       {ev.patientName}
                     </Link>
                   </p>
                   <div className="flex gap-2 mt-2">
                     {ev.testsApplied.map((t) => (
-                      <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
+                      <Badge key={t} variant="outline" className="text-xs">
+                        {t}
+                      </Badge>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground">Iniciada em {formatDate(ev.createdAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Iniciada em {formatDate(ev.createdAt)}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" asChild>
