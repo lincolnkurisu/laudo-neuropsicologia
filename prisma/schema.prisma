@@ -1,0 +1,303 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum EducationLevel {
+  NO_FORMAL_EDUCATION
+  INCOMPLETE_ELEMENTARY
+  COMPLETE_ELEMENTARY
+  INCOMPLETE_HIGH_SCHOOL
+  COMPLETE_HIGH_SCHOOL
+  INCOMPLETE_HIGHER
+  COMPLETE_HIGHER
+  POSTGRADUATE
+}
+
+enum EvaluationStatus {
+  IN_PROGRESS
+  COMPLETED
+  REPORT_GENERATED
+}
+
+// ─── User (Psicólogo / Clínica) ──────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  crp         String?
+  clinicName  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patients    Patient[]
+  evaluations Evaluation[]
+}
+
+// ─── Patient ─────────────────────────────────────────────────────────────────
+
+model Patient {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName       String
+  dateOfBirth    DateTime
+  gender         Gender
+  educationLevel EducationLevel
+  occupation     String?
+  phone          String?
+  email          String?
+  cpf            String?        @unique
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  anamneses      Anamnesis[]
+  evaluations    Evaluation[]
+
+  @@index([userId])
+}
+
+// ─── Anamnesis ───────────────────────────────────────────────────────────────
+
+model Anamnesis {
+  id                      String   @id @default(cuid())
+  patientId               String
+  patient                 Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  mainComplaint           String
+  complaintDuration       String?
+  referralSource          String?
+
+  medicalHistory          String?
+  currentMedications      String?
+  previousTreatments      String?
+
+  familyHistory           String?
+
+  birthConditions         String?
+  developmentalMilestones String?
+  schoolHistory           String?
+  learningDifficulties    String?
+
+  livingSituation         String?
+  socialSupport           String?
+  recentLifeEvents        String?
+
+  sleepQuality            String?
+  physicalActivity        String?
+  substanceUse            String?
+
+  clinicalObservations    String?
+  behaviorDuringSession   String?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+// ─── Evaluation ───────────────────────────────────────────────────────────────
+
+model Evaluation {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  title     String           @default("Avaliação Neuropsicológica")
+  status    EvaluationStatus @default(IN_PROGRESS)
+  notes     String?
+
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  testAsrs18 TestAsrs18?
+  testBfp    TestBfp?
+  testBpa2   TestBpa2?
+  testWasi   TestWasi?
+  testFdt    TestFdt?
+
+  @@index([userId])
+  @@index([patientId])
+}
+
+// ─── Test: ASRS-18 ────────────────────────────────────────────────────────────
+
+model TestAsrs18 {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  item1  Int
+  item2  Int
+  item3  Int
+  item4  Int
+  item5  Int
+  item6  Int
+  item7  Int
+  item8  Int
+  item9  Int
+  item10 Int
+  item11 Int
+  item12 Int
+  item13 Int
+  item14 Int
+  item15 Int
+  item16 Int
+  item17 Int
+  item18 Int
+
+  scorePartA          Int?
+  scorePartB          Int?
+  totalScore          Int?
+  partAPositiveItems  Int?
+  partBPositiveItems  Int?
+  clinicalSignificant Boolean?
+  interpretation      String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: BFP ────────────────────────────────────────────────────────────────
+
+model TestBfp {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  rawItems Json
+
+  rawNeuroticismo Float?
+  rawExtroversao  Float?
+  rawSocializacao Float?
+  rawRealizacao   Float?
+  rawAbertura     Float?
+
+  percentileNeuroticismo Int?
+  percentileExtroversao  Int?
+  percentileSocializacao Int?
+  percentileRealizacao   Int?
+  percentileAbertura     Int?
+
+  classificationNeuroticismo String?
+  classificationExtroversao  String?
+  classificationSocializacao String?
+  classificationRealizacao   String?
+  classificationAbertura     String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: BPA-2 ──────────────────────────────────────────────────────────────
+
+model TestBpa2 {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  concentradaAcertos Int
+  concentradaErros   Int
+  divididaAcertos    Int
+  divididaErros      Int
+  alternadaAcertos   Int
+  alternadaErros     Int
+
+  concentradaPB Int?
+  divididaPB    Int?
+  alternadaPB   Int?
+
+  concentradaPercentile Int?
+  divididaPercentile    Int?
+  alternadaPercentile   Int?
+
+  concentradaClassification String?
+  divididaClassification    String?
+  alternadaClassification   String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: WASI ───────────────────────────────────────────────────────────────
+
+model TestWasi {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  vocabularioPB     Int
+  cubosPB           Int
+  semelhancasPB     Int
+  raciocMatricialPB Int
+
+  vocabularioT     Int?
+  cubosT           Int?
+  semelhancasT     Int?
+  raciocMatricialT Int?
+
+  qiVerbal   Int?
+  qiExecucao Int?
+  qiTotal    Int?
+
+  qiVerbalClassification   String?
+  qiExecucaoClassification String?
+  qiTotalClassification    String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: FDT ────────────────────────────────────────────────────────────────
+
+model TestFdt {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  leituraTime       Float
+  leituraErrors     Int
+  contagemTime      Float
+  contagemErrors    Int
+  escolhaTime       Float
+  escolhaErrors     Int
+  alternanciaTime   Float
+  alternanciaErrors Int
+
+  inhibitionScore  Float?
+  flexibilityScore Float?
+
+  leituraPercentile     Int?
+  contagemPercentile    Int?
+  escolhaPercentile     Int?
+  alternanciaPercentile Int?
+  inhibitionPercentile  Int?
+  flexibilityPercentile Int?
+
+  leituraClassification     String?
+  contagemClassification    String?
+  escolhaClassification     String?
+  alternanciaClassification String?
+  inhibitionClassification  String?
+  flexibilityClassification String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
