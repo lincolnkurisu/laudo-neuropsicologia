@@ -3,6 +3,8 @@ import { z } from "zod";
 import { scoreBpa2 } from "@/services/scoring/bpa2";
 import { EducationLevel } from "@/generated/prisma";
 
+export const dynamic = "force-dynamic";
+
 const bpa2Schema = z.object({
   concentradaAcertos: z.number().int().min(0),
   concentradaErros:   z.number().int().min(0),

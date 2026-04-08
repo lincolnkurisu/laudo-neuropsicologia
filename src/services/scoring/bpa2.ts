@@ -39,8 +39,7 @@ type SubtestNorms = NormsByAge;
 
 // ─── Faixas etárias disponíveis ──────────────────────────────────────────────
 
-const AGE_RANGES = ["17-25", "26-35", "36-45", "46-60"] as const;
-type AgeRange = (typeof AGE_RANGES)[number];
+type AgeRange = "17-25" | "26-35" | "36-45" | "46-60";
 
 function getAgeRange(age: number): AgeRange | null {
   if (age >= 17 && age <= 25) return "17-25";

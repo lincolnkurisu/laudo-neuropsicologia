@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+// Usa as fontes Geist já incluídas no repositório — sem dependência de rede no build
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
 
 export const metadata: Metadata = {
   title: "NeuroPsi – Plataforma de Avaliação Neuropsicológica",
-  description: "Sistema de gerenciamento de pacientes, anamnese e geração de laudos neuropsicológicos.",
+  description:
+    "Sistema de gerenciamento de pacientes, anamnese e geração de laudos neuropsicológicos.",
 };
 
 export default function RootLayout({
@@ -16,7 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+      <body className={`${geistSans.variable} font-sans antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

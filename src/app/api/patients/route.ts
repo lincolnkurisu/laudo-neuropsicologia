@@ -1,4 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
+// Garante renderização dinâmica — não tenta executar em build sem DATABASE_URL
+export const dynamic = "force-dynamic";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
@@ -19,7 +22,7 @@ const createPatientSchema = z.object({
 });
 
 // GET /api/patients — lista todos os pacientes do usuário autenticado
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     // TODO: extrair userId da sessão (NextAuth / Clerk)
     const userId = "demo-user-id";

@@ -3,6 +3,8 @@ import { z } from "zod";
 import { scoreAsrs18 } from "@/services/scoring/asrs18";
 import type { Asrs18Input } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 const asrs18Schema = z.object({
   items: z
     .array(z.number().int().min(0).max(4))
