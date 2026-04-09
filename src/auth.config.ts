@@ -3,6 +3,7 @@ import type { NextAuthConfig } from "next-auth";
 // Configuração leve para o middleware (Edge Runtime).
 // NÃO importa bcryptjs, Prisma ou qualquer módulo Node.js.
 export const authConfig: NextAuthConfig = {
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
