@@ -1,9 +1,10 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
-import process from "node:process";
 
-// Prisma 7 usa o engine "client" (WebAssembly) que requer um driver adapter.
-// Em desenvolvimento o singleton é reutilizado entre hot-reloads.
+// Prisma 7 usa engine "client" (WebAssembly) que EXIGE um driver adapter real.
+// Para evitar falha no `next build` (sem DATABASE_URL), usamos um Proxy:
+// o PrismaClient só é instanciado quando um método é chamado pela 1ª vez
+// (em runtime), nunca durante a análise estática do build.
 
 declare global {
   var __prisma: PrismaClient | undefined;
@@ -11,25 +12,35 @@ declare global {
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
-
   if (!connectionString) {
-    // Em build sem DATABASE_URL (ex: deploy preview sem DB), retorna um client
-    // não conectado para não quebrar a análise estática do Next.js.
-    // As rotas de API já têm `export const dynamic = 'force-dynamic'`,
-    // então o código de runtime nunca chegará aqui sem DATABASE_URL.
-    return new PrismaClient({ adapter: null as never });
+    throw new Error(
+      "DATABASE_URL não configurada. Configure a variável de ambiente no Vercel."
+    );
   }
-
   const adapter = new PrismaPg({ connectionString });
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
   });
 }
 
-export const prisma: PrismaClient =
-  globalThis.__prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__prisma = prisma;
+function getClient(): PrismaClient {
+  if (globalThis.__prisma) return globalThis.__prisma;
+  const client = createPrismaClient();
+  if (process.env.NODE_ENV !== "production") {
+    globalThis.__prisma = client;
+  }
+  return client;
 }
+
+// O Proxy adia a criação do PrismaClient para o primeiro acesso em runtime.
+// Durante o `next build`, este módulo é importado mas nenhum método é chamado,
+// então createPrismaClient() nunca roda sem DATABASE_URL.
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop: string | symbol) {
+    return (getClient() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});

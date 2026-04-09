@@ -1,7 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
-
-// Garante renderização dinâmica — não tenta executar em build sem DATABASE_URL
 export const dynamic = "force-dynamic";
+
+import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
