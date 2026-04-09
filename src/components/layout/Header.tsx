@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 // ─── Mapeamento de rotas → título + breadcrumbs ───────────────────────────────
 
 const ROUTE_META: Record<string, { title: string; crumb: string }> = {
-  "/dashboard":            { title: "Dashboard",   crumb: "Início" },
-  "/patients":             { title: "Pacientes",   crumb: "Pacientes" },
-  "/patients/new":         { title: "Novo Paciente", crumb: "Pacientes / Novo" },
-  "/evaluations":          { title: "Avaliações",  crumb: "Avaliações" },
-  "/reports":              { title: "Laudos",      crumb: "Laudos" },
+  "/dashboard":            { title: "Dashboard",      crumb: "Início" },
+  "/patients":             { title: "Pacientes",      crumb: "Pacientes" },
+  "/patients/new":         { title: "Novo Paciente",  crumb: "Pacientes / Novo" },
+  "/evaluations":          { title: "Avaliações",     crumb: "Avaliações" },
+  "/reports":              { title: "Laudos",         crumb: "Laudos" },
+  "/settings":             { title: "Configurações",  crumb: "Configurações" },
 };
 
 function resolveMeta(pathname: string) {
