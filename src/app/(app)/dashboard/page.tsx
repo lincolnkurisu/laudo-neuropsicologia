@@ -1,312 +1,191 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Users, ClipboardList, FileText, TrendingUp,
-  ArrowUpRight, ChevronRight, Clock, CheckCircle2,
-  AlertCircle,
+  ArrowUpRight, ChevronRight, Clock, CheckCircle2, Plus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { formatDate } from "@/lib/utils";
-import { STATUS_CONFIG, MOCK_STATS, MOCK_RECENT_PATIENTS, MOCK_PATIENTS } from "@/lib/constants";
+import { formatDate, calculateAge } from "@/lib/utils";
+import { STATUS_CONFIG } from "@/lib/constants";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-// ─── Dados das atividades recentes ───────────────────────────────────────────
+export default async function DashboardPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+  const userId = session.user.id;
 
-const RECENT_ACTIVITY = [
-  {
-    id: "1",
-    type: "evaluation" as const,
-    text: "Avaliação ASRS-18 aplicada",
-    patient: "Ana Beatriz Silva",
-    time: "há 2 horas",
-  },
-  {
-    id: "2",
-    type: "report" as const,
-    text: "Laudo gerado e finalizado",
-    patient: "Fernanda Costa Lima",
-    time: "hoje às 09:14",
-  },
-  {
-    id: "3",
-    type: "patient" as const,
-    text: "Novo paciente cadastrado",
-    patient: "Carlos Eduardo Mendes",
-    time: "ontem às 16:30",
-  },
-  {
-    id: "4",
-    type: "evaluation" as const,
-    text: "BPA-2 aplicado",
-    patient: "Ana Beatriz Silva",
-    time: "ontem às 14:00",
-  },
-];
+  // Busca todas as estatísticas em paralelo
+  const [
+    totalPatients,
+    activeEvaluations,
+    completedReports,
+    recentPatients,
+    recentEvaluations,
+  ] = await Promise.all([
+    prisma.patient.count({ where: { userId } }),
+    prisma.evaluation.count({ where: { userId, status: "IN_PROGRESS" } }),
+    prisma.evaluation.count({ where: { userId, status: { in: ["COMPLETED", "REPORT_GENERATED"] } } }),
+    prisma.patient.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+      include: {
+        evaluations: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+    }),
+    prisma.evaluation.findMany({
+      where: { userId, status: "IN_PROGRESS" },
+      orderBy: { updatedAt: "desc" },
+      take: 3,
+      include: {
+        patient: { select: { fullName: true } },
+        testAsrs18: { select: { id: true } },
+        testBfp:   { select: { id: true } },
+        testBpa2:  { select: { id: true } },
+        testWasi:  { select: { id: true } },
+        testFdt:   { select: { id: true } },
+      },
+    }),
+  ]);
 
-const ACTIVITY_ICON = {
-  evaluation: { Icon: ClipboardList, color: "text-indigo-500",  bg: "bg-indigo-50" },
-  report:     { Icon: CheckCircle2,  color: "text-emerald-500", bg: "bg-emerald-50" },
-  patient:    { Icon: Users,         color: "text-violet-500",  bg: "bg-violet-50" },
-};
+  const statCards = [
+    { label: "Total de Pacientes",  value: totalPatients,     gradient: "stat-gradient-indigo", icon: Users,         trend: null },
+    { label: "Avaliações Ativas",   value: activeEvaluations,  gradient: "stat-gradient-emerald", icon: ClipboardList, trend: null },
+    { label: "Avaliações Concluídas", value: completedReports, gradient: "stat-gradient-violet", icon: FileText,      trend: null },
+    { label: "Total de Avaliações", value: activeEvaluations + completedReports, gradient: "stat-gradient-amber", icon: TrendingUp, trend: null },
+  ];
 
-// ─── Cards de estatística ─────────────────────────────────────────────────────
-
-const STAT_CARDS = [
-  {
-    label:    "Total de Pacientes",
-    value:    MOCK_STATS.totalPatients,
-    sub:      "+2 este mês",
-    gradient: "stat-gradient-indigo",
-    icon:     Users,
-    trend:    "+20%",
-  },
-  {
-    label:    "Avaliações Ativas",
-    value:    MOCK_STATS.activeEvaluations,
-    sub:      "em andamento agora",
-    gradient: "stat-gradient-emerald",
-    icon:     ClipboardList,
-    trend:    null,
-  },
-  {
-    label:    "Laudos Gerados",
-    value:    MOCK_STATS.completedReports,
-    sub:      "+3 esta semana",
-    gradient: "stat-gradient-violet",
-    icon:     FileText,
-    trend:    "+15%",
-  },
-  {
-    label:    "Novas Avaliações",
-    value:    MOCK_STATS.thisMonthEvals,
-    sub:      "este mês",
-    gradient: "stat-gradient-amber",
-    icon:     TrendingUp,
-    trend:    "+8%",
-  },
-];
-
-// ─── Página ───────────────────────────────────────────────────────────────────
-
-export default function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── Cards de Estatística ── */}
+      {/* Cards de Estatística */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {STAT_CARDS.map(({ label, value, sub, gradient, icon: Icon, trend }) => (
-          <div
-            key={label}
-            className={`${gradient} rounded-2xl p-5 text-white shadow-lg card-hover`}
-          >
+        {statCards.map(({ label, value, gradient, icon: Icon, trend }) => (
+          <div key={label} className={`${gradient} rounded-2xl p-5 text-white shadow-lg card-hover`}>
             <div className="flex items-start justify-between">
               <div className="rounded-xl bg-white/20 p-2.5">
-                <Icon className="h-5 w-5" aria-hidden="true" />
+                <Icon className="h-5 w-5" />
               </div>
               {trend && (
-                <span className="flex items-center gap-0.5 rounded-full bg-white/20
-                                 px-2 py-0.5 text-xs font-semibold">
-                  <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-                  {trend}
+                <span className="flex items-center gap-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                  <ArrowUpRight className="h-3 w-3" />{trend}
                 </span>
               )}
             </div>
             <div className="mt-4">
               <p className="text-4xl font-bold tracking-tight">{value}</p>
               <p className="mt-0.5 text-sm font-medium text-white/80">{label}</p>
-              <p className="mt-1 text-xs text-white/60">{sub}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ── Grid principal ── */}
+      {/* Grid principal */}
       <div className="grid gap-6 lg:grid-cols-3">
 
-        {/* Pacientes recentes (col 2) */}
+        {/* Pacientes recentes */}
         <div className="lg:col-span-2">
           <Card className="h-full shadow-sm">
             <div className="flex items-center justify-between border-b px-6 py-4">
               <div>
                 <h2 className="font-semibold text-foreground">Pacientes Recentes</h2>
-                <p className="text-xs text-muted-foreground">Últimas avaliações</p>
+                <p className="text-xs text-muted-foreground">Últimos cadastros</p>
               </div>
               <Button variant="ghost" size="sm" asChild className="text-xs gap-1">
                 <Link href="/patients">
-                  Ver todos <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  Ver todos <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             </div>
-
             <CardContent className="p-0">
-              {MOCK_RECENT_PATIENTS.map((patient, idx) => {
-                const cfg = STATUS_CONFIG[patient.status];
-                const fullPatient = MOCK_PATIENTS.find(p => p.id === patient.id);
-                return (
-                  <Link
-                    key={patient.id}
-                    href={`/patients/${patient.id}`}
-                    className={`flex items-center gap-4 px-6 py-4 transition-colors
-                               hover:bg-accent/50
-                               ${idx !== MOCK_RECENT_PATIENTS.length - 1 ? "border-b" : ""}`}
-                  >
-                    {/* Avatar */}
-                    <Avatar name={patient.fullName} size="md" />
-
-                    {/* Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {patient.fullName}
-                      </p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">
-                          {patient.age} anos
-                        </span>
-                        {fullPatient?.occupation && (
-                          <>
-                            <span className="text-muted-foreground/40">·</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                              {fullPatient.occupation}
-                            </span>
-                          </>
-                        )}
+              {recentPatients.length === 0 ? (
+                <div className="flex flex-col items-center py-12 text-center text-muted-foreground">
+                  <Users className="h-8 w-8 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">Nenhum paciente cadastrado</p>
+                  <Button asChild size="sm" className="mt-4">
+                    <Link href="/patients/new">
+                      <Plus className="h-3.5 w-3.5 mr-1" />Cadastrar paciente
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                recentPatients.map((patient, idx) => {
+                  const lastEval = patient.evaluations[0];
+                  const cfg = lastEval ? STATUS_CONFIG[lastEval.status] : null;
+                  return (
+                    <Link key={patient.id} href={`/patients/${patient.id}`}
+                      className={`flex items-center gap-4 px-6 py-4 transition-colors hover:bg-accent/50
+                        ${idx !== recentPatients.length - 1 ? "border-b" : ""}`}>
+                      <Avatar name={patient.fullName} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold">{patient.fullName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {calculateAge(patient.dateOfBirth)} anos · Cadastrado em {formatDate(patient.createdAt)}
+                        </p>
                       </div>
-                    </div>
-
-                    {/* Status + data */}
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <Badge variant={cfg.variant} className="text-[10px]">
-                        {cfg.label}
-                      </Badge>
-                      <span className="text-[11px] text-muted-foreground">
-                        {formatDate(patient.lastEval)}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+                      {cfg && (
+                        <Badge variant={cfg.variant} className="text-[10px] shrink-0">{cfg.label}</Badge>
+                      )}
+                    </Link>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Atividade recente (col 1) */}
+        {/* Avaliações em andamento */}
         <div>
           <Card className="h-full shadow-sm">
             <div className="flex items-center justify-between border-b px-5 py-4">
               <div>
-                <h2 className="font-semibold text-foreground">Atividade</h2>
-                <p className="text-xs text-muted-foreground">Últimas ações</p>
+                <h2 className="font-semibold text-foreground">Em Andamento</h2>
+                <p className="text-xs text-muted-foreground">Avaliações ativas</p>
               </div>
-              <Clock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Clock className="h-4 w-4 text-muted-foreground" />
             </div>
-
-            <CardContent className="p-5 space-y-4">
-              {RECENT_ACTIVITY.map((item) => {
-                const { Icon, color, bg } = ACTIVITY_ICON[item.type];
-                return (
-                  <div key={item.id} className="flex gap-3">
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center
-                                     rounded-full ${bg}`}>
-                      <Icon className={`h-3.5 w-3.5 ${color}`} aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground leading-snug">
-                        {item.text}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {item.patient}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-                        {item.time}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+            <CardContent className="p-4 space-y-3">
+              {recentEvaluations.length === 0 ? (
+                <div className="flex flex-col items-center py-8 text-center text-muted-foreground">
+                  <CheckCircle2 className="h-7 w-7 mb-2 opacity-20" />
+                  <p className="text-sm">Nenhuma avaliação ativa</p>
+                  <Button asChild size="sm" variant="outline" className="mt-3">
+                    <Link href="/evaluations/new">Nova avaliação</Link>
+                  </Button>
+                </div>
+              ) : (
+                recentEvaluations.map((ev) => {
+                  const testsDone = [ev.testAsrs18, ev.testBfp, ev.testBpa2, ev.testWasi, ev.testFdt]
+                    .filter(Boolean).length;
+                  const progress = Math.round((testsDone / 5) * 100);
+                  return (
+                    <Link key={ev.id} href={`/evaluations/${ev.id}`}
+                      className="block rounded-lg border p-3 hover:bg-accent/50 transition-colors">
+                      <p className="text-sm font-medium truncate">{ev.patient.fullName}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">{progress}%</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{testsDone}/5 testes</p>
+                    </Link>
+                  );
+                })
+              )}
+              {recentEvaluations.length > 0 && (
+                <Button asChild variant="ghost" size="sm" className="w-full text-xs">
+                  <Link href="/evaluations">Ver todas</Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* ── Avaliações em andamento ── */}
-      <Card className="shadow-sm">
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <div>
-            <h2 className="font-semibold text-foreground">Avaliações em Andamento</h2>
-            <p className="text-xs text-muted-foreground">
-              {MOCK_STATS.activeEvaluations} avaliações precisam de atenção
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/evaluations">Ver todas</Link>
-          </Button>
-        </div>
-
-        <CardContent className="p-0">
-          {[
-            {
-              id: "e1",
-              patient: "Ana Beatriz Silva",
-              title: "Avaliação Neuropsicológica",
-              progress: 40,
-              tests: ["ASRS-18", "BPA-2"],
-              pending: ["WASI", "FDT", "BFP"],
-            },
-          ].map((ev) => (
-            <div key={ev.id} className="flex items-center gap-4 px-6 py-4">
-              <Avatar name={ev.patient} size="md" />
-
-              <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">{ev.patient}</p>
-                    <p className="text-xs text-muted-foreground">{ev.title}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-indigo-600">
-                    {ev.progress}%
-                  </span>
-                </div>
-
-                {/* Barra de progresso */}
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r
-                               from-indigo-500 to-violet-500 transition-all"
-                    style={{ width: `${ev.progress}%` }}
-                  />
-                </div>
-
-                {/* Testes */}
-                <div className="flex flex-wrap gap-1.5">
-                  {ev.tests.map((t) => (
-                    <span key={t}
-                      className="inline-flex items-center gap-1 rounded-full
-                                 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium
-                                 text-emerald-700">
-                      <CheckCircle2 className="h-2.5 w-2.5" aria-hidden="true" />
-                      {t}
-                    </span>
-                  ))}
-                  {ev.pending.map((t) => (
-                    <span key={t}
-                      className="inline-flex items-center gap-1 rounded-full
-                                 bg-slate-100 px-2 py-0.5 text-[10px] font-medium
-                                 text-slate-500">
-                      <AlertCircle className="h-2.5 w-2.5" aria-hidden="true" />
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <Button size="sm" asChild className="shrink-0">
-                <Link href={`/evaluations/${ev.id}`}>Continuar</Link>
-              </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   );
 }

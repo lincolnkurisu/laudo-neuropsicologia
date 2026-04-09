@@ -1,97 +1,112 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Plus, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
-import { STATUS_CONFIG, type EvaluationStatusKey } from "@/lib/constants";
+import { STATUS_CONFIG } from "@/lib/constants";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-const MOCK_EVALUATIONS: Array<{
-  id: string;
-  title: string;
-  patientName: string;
-  patientId: string;
-  status: EvaluationStatusKey;
-  createdAt: Date;
-  testsApplied: string[];
-}> = [
-  {
-    id: "e1",
-    title: "Avaliação Neuropsicológica Completa",
-    patientName: "Ana Beatriz Silva",
-    patientId: "1",
-    status: "IN_PROGRESS",
-    createdAt: new Date("2026-04-03"),
-    testsApplied: ["ASRS-18", "BPA-2"],
-  },
-  {
-    id: "e2",
-    title: "Avaliação Neuropsicológica Completa",
-    patientName: "Carlos Eduardo Mendes",
-    patientId: "2",
-    status: "COMPLETED",
-    createdAt: new Date("2026-03-28"),
-    testsApplied: ["ASRS-18", "BPA-2", "WASI"],
-  },
-];
+export default async function EvaluationsPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
 
-export default function EvaluationsPage() {
+  const evaluations = await prisma.evaluation.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+    include: {
+      patient: { select: { id: true, fullName: true } },
+      testAsrs18: { select: { id: true } },
+      testBfp:   { select: { id: true } },
+      testBpa2:  { select: { id: true } },
+      testWasi:  { select: { id: true } },
+      testFdt:   { select: { id: true } },
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Avaliações</h1>
-          <p className="text-muted-foreground">
-            {MOCK_EVALUATIONS.length} avaliações registradas
+          <p className="text-muted-foreground mt-1">
+            {evaluations.length === 0
+              ? "Nenhuma avaliação iniciada"
+              : `${evaluations.length} avaliação${evaluations.length !== 1 ? "ões" : ""}`}
           </p>
         </div>
+        <Button asChild>
+          <Link href="/evaluations/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Avaliação
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid gap-4">
-        {MOCK_EVALUATIONS.map((ev) => {
-          const cfg = STATUS_CONFIG[ev.status];
-          return (
-            <Card key={ev.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="flex items-center justify-between p-6">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold">{ev.title}</span>
-                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
+      {evaluations.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center py-16 text-center text-muted-foreground">
+            <ClipboardList className="h-12 w-12 mb-4 opacity-20" />
+            <p className="font-medium text-foreground">Nenhuma avaliação ainda</p>
+            <p className="text-sm mt-1">Clique em &quot;Nova Avaliação&quot; para começar.</p>
+            <Button asChild className="mt-5">
+              <Link href="/evaluations/new">Criar primeira avaliação</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {evaluations.map((ev) => {
+            const cfg = STATUS_CONFIG[ev.status];
+            const testsTotal = 5;
+            const testsDone = [ev.testAsrs18, ev.testBfp, ev.testBpa2, ev.testWasi, ev.testFdt]
+              .filter(Boolean).length;
+            const progress = Math.round((testsDone / testsTotal) * 100);
+
+            return (
+              <Card key={ev.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="flex items-center gap-4 p-5">
+                  <Avatar name={ev.patient.fullName} size="md" />
+
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{ev.title}</span>
+                      <Badge variant={cfg.variant} className="text-[10px]">{cfg.label}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Paciente:{" "}
+                      <Link href={`/patients/${ev.patient.id}`} className="text-primary hover:underline font-medium">
+                        {ev.patient.fullName}
+                      </Link>
+                    </p>
+                    {/* Barra de progresso */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">{testsDone}/{testsTotal} testes</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Iniciada em {formatDate(ev.createdAt)}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Paciente:{" "}
-                    <Link
-                      href={`/patients/${ev.patientId}`}
-                      className="text-primary hover:underline"
-                    >
-                      {ev.patientName}
-                    </Link>
-                  </p>
-                  <div className="flex gap-2 mt-2">
-                    {ev.testsApplied.map((t) => (
-                      <Badge key={t} variant="outline" className="text-xs">
-                        {t}
-                      </Badge>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Iniciada em {formatDate(ev.createdAt)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
-                  </Button>
-                  {ev.status === "COMPLETED" && (
-                    <Button size="sm" asChild>
-                      <Link href={`/reports/${ev.id}`}>Gerar Laudo</Link>
+
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
                     </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    {ev.status === "COMPLETED" || ev.status === "REPORT_GENERATED" ? (
+                      <Button size="sm" asChild>
+                        <Link href={`/reports/${ev.id}`}>Ver Laudo</Link>
+                      </Button>
+                    ) : null}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
