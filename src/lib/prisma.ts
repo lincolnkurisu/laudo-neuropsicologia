@@ -1,5 +1,6 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import process from "node:process";
 
 // Prisma 7 usa o engine "client" (WebAssembly) que requer um driver adapter.
 // Em desenvolvimento o singleton é reutilizado entre hot-reloads.
