@@ -1,74 +1,68 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ClipboardList, Plus, FileText, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Avatar } from "@/components/ui/avatar";
 import { formatDate, calculateAge } from "@/lib/utils";
-import { EDUCATION_LABELS, GENDER_LABELS, type PatientDetail } from "@/types";
+import { EDUCATION_LABELS, GENDER_LABELS } from "@/types";
 import { STATUS_CONFIG } from "@/lib/constants";
-
-// Mock — substituir por query Prisma com a sessão autenticada
-async function getPatient(id: string): Promise<PatientDetail | null> {
-  const MOCK: Record<string, PatientDetail> = {
-    "1": {
-      id: "1",
-      fullName: "Ana Beatriz Silva",
-      dateOfBirth: new Date("1992-03-15"),
-      gender: "FEMALE",
-      educationLevel: "COMPLETE_HIGHER",
-      occupation: "Professora",
-      phone: "(11) 98765-4321",
-      email: "ana.silva@email.com",
-      createdAt: new Date("2026-04-01"),
-      anamneses: [
-        {
-          id: "a1",
-          mainComplaint: "Dificuldades de concentração e memória no trabalho",
-          createdAt: new Date("2026-04-02"),
-        },
-      ],
-      evaluations: [
-        {
-          id: "e1",
-          title: "Avaliação Neuropsicológica Completa",
-          status: "IN_PROGRESS",
-          createdAt: new Date("2026-04-03"),
-        },
-      ],
-    },
-  };
-  return MOCK[id] ?? null;
-}
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 interface PatientPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function PatientPage({ params }: PatientPageProps) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
   const { id } = await params;
-  const patient = await getPatient(id);
+
+  const patient = await prisma.patient.findFirst({
+    where: { id, userId: session.user.id },
+    include: {
+      anamneses: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, mainComplaint: true, createdAt: true },
+      },
+      evaluations: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, title: true, status: true, createdAt: true },
+      },
+    },
+  });
+
   if (!patient) notFound();
 
   const age = calculateAge(patient.dateOfBirth);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">{patient.fullName}</h1>
-            <Badge variant="outline">{GENDER_LABELS[patient.gender]}</Badge>
+
+      {/* Cabeçalho */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Avatar name={patient.fullName} size="xl" />
+          <div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-bold tracking-tight">{patient.fullName}</h1>
+              <Badge variant="outline">{GENDER_LABELS[patient.gender]}</Badge>
+            </div>
+            <p className="text-muted-foreground mt-1">
+              {age} anos · {EDUCATION_LABELS[patient.educationLevel]}
+              {patient.occupation ? ` · ${patient.occupation}` : ""}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Cadastrado em {formatDate(patient.createdAt)}
+            </p>
           </div>
-          <p className="text-muted-foreground mt-1">
-            {age} anos · {EDUCATION_LABELS[patient.educationLevel]}
-            {patient.occupation ? ` · ${patient.occupation}` : ""}
-          </p>
         </div>
-        <Button asChild>
+        <Button asChild className="shrink-0">
           <Link href={`/evaluations/new?patientId=${patient.id}`}>
             <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             Nova Avaliação
@@ -100,7 +94,7 @@ export default async function PatientPage({ params }: PatientPageProps) {
               <CardDescription>Dados demográficos e de contato.</CardDescription>
             </CardHeader>
             <CardContent>
-              <dl className="grid grid-cols-2 gap-4">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { label: "Nome completo",      value: patient.fullName },
                   { label: "Data de nascimento", value: `${formatDate(patient.dateOfBirth)} (${age} anos)` },
@@ -109,11 +103,13 @@ export default async function PatientPage({ params }: PatientPageProps) {
                   { label: "Ocupação",            value: patient.occupation ?? "—" },
                   { label: "Telefone",            value: patient.phone ?? "—" },
                   { label: "Email",               value: patient.email ?? "—" },
-                  { label: "Cadastrado em",       value: formatDate(patient.createdAt) },
+                  { label: "CPF",                 value: patient.cpf ?? "—" },
                 ].map(({ label, value }) => (
                   <div key={label}>
-                    <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-                    <dd className="mt-1 text-sm">{value}</dd>
+                    <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {label}
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium">{value}</dd>
                   </div>
                 ))}
               </dl>
@@ -145,19 +141,18 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </CardHeader>
             <CardContent>
               {patient.anamneses.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhuma anamnese registrada.
-                </p>
+                <div className="text-center py-10 text-muted-foreground">
+                  <p className="font-medium">Nenhuma anamnese registrada</p>
+                  <p className="text-sm mt-1">Clique em &quot;Nova Anamnese&quot; para começar.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {patient.anamneses.map((a) => (
-                    <div
-                      key={a.id}
-                      className="flex items-center justify-between rounded-lg border p-4"
-                    >
+                    <div key={a.id}
+                      className="flex items-center justify-between rounded-lg border p-4">
                       <div>
-                        <p className="font-medium">Queixa: {a.mainComplaint}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-sm">{a.mainComplaint}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           Registrada em {formatDate(a.createdAt)}
                         </p>
                       </div>
@@ -190,25 +185,24 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </CardHeader>
             <CardContent>
               {patient.evaluations.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Nenhuma avaliação iniciada.
-                </p>
+                <div className="text-center py-10 text-muted-foreground">
+                  <p className="font-medium">Nenhuma avaliação iniciada</p>
+                  <p className="text-sm mt-1">Clique em &quot;Nova Avaliação&quot; para começar.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {patient.evaluations.map((ev) => {
                     const cfg = STATUS_CONFIG[ev.status];
                     return (
-                      <div
-                        key={ev.id}
-                        className="flex items-center justify-between rounded-lg border p-4"
-                      >
+                      <div key={ev.id}
+                        className="flex items-center justify-between rounded-lg border p-4">
                         <div>
-                          <p className="font-medium">{ev.title}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-sm">{ev.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             Iniciada em {formatDate(ev.createdAt)}
                           </p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
                           <Badge variant={cfg.variant}>{cfg.label}</Badge>
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
