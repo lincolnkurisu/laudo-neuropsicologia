@@ -12,70 +12,65 @@ import {
   ChevronRight,
   Settings,
   LogOut,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 
-// ─── Navegação principal ──────────────────────────────────────────────────────
-
 const NAV_ITEMS = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    description: "Visão geral",
-  },
-  {
-    href: "/patients",
-    label: "Pacientes",
-    icon: Users,
-    description: "Cadastro e perfis",
-  },
-  {
-    href: "/evaluations",
-    label: "Avaliações",
-    icon: ClipboardList,
-    description: "Sessões ativas",
-  },
-  {
-    href: "/reports",
-    label: "Laudos",
-    icon: FileText,
-    description: "Relatórios gerados",
-  },
+  { href: "/dashboard",   label: "Dashboard",  icon: LayoutDashboard, description: "Visão geral" },
+  { href: "/patients",    label: "Pacientes",   icon: Users,           description: "Cadastro e perfis" },
+  { href: "/evaluations", label: "Avaliações",  icon: ClipboardList,   description: "Sessões ativas" },
+  { href: "/reports",     label: "Laudos",      icon: FileText,        description: "Relatórios gerados" },
 ];
 
-// ─── Componente ───────────────────────────────────────────────────────────────
+interface SidebarProps {
+  onClose?: () => void;
+}
 
-export function Sidebar() {
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const userName = session?.user?.name ?? "Psicólogo";
+  const userName  = session?.user?.name  ?? "Psicólogo";
   const userEmail = session?.user?.email ?? "";
 
   return (
-    <aside className="flex h-screen w-64 flex-col overflow-hidden"
-           style={{ background: "hsl(var(--sidebar-bg))" }}>
-
+    <aside
+      className="flex h-screen w-64 flex-col overflow-hidden"
+      style={{ background: "hsl(var(--sidebar-bg))" }}
+    >
       {/* ── Logo ── */}
-      <div className="flex items-center gap-3 px-5 py-5"
-           style={{ borderBottom: "1px solid hsl(var(--sidebar-border))" }}>
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl
+      <div
+        className="flex items-center gap-3 px-5 py-5"
+        style={{ borderBottom: "1px solid hsl(var(--sidebar-border))" }}
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl
                         bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg
                         shadow-indigo-900/50">
           <BrainCircuit className="h-5 w-5 text-white" aria-hidden="true" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-sm font-bold tracking-tight text-white">NeuroPsi</p>
           <p className="text-[11px]" style={{ color: "hsl(var(--sidebar-muted))" }}>
             Avaliação Clínica
           </p>
         </div>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="lg:hidden flex h-7 w-7 items-center justify-center rounded-lg
+                       text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Fechar menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* ── Rótulo de seção ── */}
-      <div className="px-4 pt-6 pb-2">
+      <div className="px-4 pb-2 pt-6">
         <p className="text-[10px] font-semibold uppercase tracking-widest"
            style={{ color: "hsl(var(--sidebar-muted))" }}>
           Menu
@@ -90,6 +85,7 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onClose}
               className={cn(
                 "group flex items-center gap-3 rounded-lg px-3 py-2.5",
                 "transition-all duration-150",
@@ -100,18 +96,13 @@ export function Sidebar() {
             >
               <div className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all",
-                active
-                  ? "bg-indigo-500/20"
-                  : "bg-white/5 group-hover:bg-white/10"
+                active ? "bg-indigo-500/20" : "bg-white/5 group-hover:bg-white/10"
               )}>
                 <Icon className={cn(
                   "h-4 w-4",
-                  active
-                    ? "text-indigo-400"
-                    : "text-slate-400 group-hover:text-slate-200"
+                  active ? "text-indigo-400" : "text-slate-400 group-hover:text-slate-200"
                 )} aria-hidden="true" />
               </div>
-
               <div className="min-w-0 flex-1">
                 <p className={cn(
                   "text-sm font-medium leading-none",
@@ -124,10 +115,8 @@ export function Sidebar() {
                   {description}
                 </p>
               </div>
-
               {active && (
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-indigo-400"
-                              aria-hidden="true" />
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-indigo-400" aria-hidden="true" />
               )}
             </Link>
           );
@@ -136,9 +125,9 @@ export function Sidebar() {
 
       {/* ── Rodapé: Usuário ── */}
       <div className="mt-auto" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>
-        {/* Perfil + configurações */}
         <Link
           href="/settings"
+          onClick={onClose}
           className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5"
         >
           <Avatar name={userName} size="sm" className="ring-2 ring-indigo-500/30" />
@@ -152,7 +141,6 @@ export function Sidebar() {
                     aria-hidden="true" />
         </Link>
 
-        {/* Botão de sair */}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex w-full items-center gap-3 px-4 py-2.5 text-left

@@ -66,34 +66,31 @@ export default async function ReportsPage() {
 
             return (
               <Card key={ev.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="flex items-center gap-4 p-5">
-                  <Avatar name={ev.patient.fullName} size="md" />
-
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">{ev.title}</span>
-                      <Badge variant="success" className="text-[10px]">Laudo gerado</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Paciente:{" "}
-                      <Link href={`/patients/${ev.patient.id}`}
-                        className="text-primary hover:underline font-medium">
-                        {ev.patient.fullName}
-                      </Link>
-                    </p>
-                    {appliedTests.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {appliedTests.map((t) => (
-                          <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                        ))}
+                <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 sm:p-5">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar name={ev.patient.fullName} size="md" />
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm truncate">{ev.title}</span>
+                        <Badge variant="success" className="text-[10px] shrink-0">Laudo gerado</Badge>
                       </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Concluída em {formatDate(ev.updatedAt)}
-                    </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        <Link href={`/patients/${ev.patient.id}`}
+                          className="text-primary hover:underline font-medium">
+                          {ev.patient.fullName}
+                        </Link>
+                        {" · "}{formatDate(ev.updatedAt)}
+                      </p>
+                      {appliedTests.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {appliedTests.map((t) => (
+                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="shrink-0">
                     <Link href={`/evaluations/${ev.id}`}>Ver Avaliação</Link>
                   </Button>
                 </CardContent>

@@ -70,7 +70,7 @@ export default function PatientsPage() {
       </div>
 
       {/* Busca */}
-      <div className="relative max-w-sm">
+      <div className="relative w-full max-w-sm">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input
           placeholder="Buscar por nome ou ocupação..."
@@ -125,45 +125,33 @@ export default function PatientsPage() {
             const age = calculateAge(new Date(patient.dateOfBirth));
             return (
               <Card key={patient.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="flex items-center gap-4 p-5">
-                  <Avatar name={patient.fullName} size="lg" />
-
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-base">{patient.fullName}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {GENDER_LABELS[patient.gender]}
-                      </Badge>
-                      {patient._count && patient._count.evaluations > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {patient._count.evaluations} avaliação{patient._count.evaluations !== 1 ? "ões" : ""}
-                        </Badge>
-                      )}
+                <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 sm:p-5">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar name={patient.fullName} size="md" />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm">{patient.fullName}</span>
+                        <Badge variant="outline" className="text-[10px]">{GENDER_LABELS[patient.gender]}</Badge>
+                        {patient._count && patient._count.evaluations > 0 && (
+                          <Badge variant="secondary" className="text-[10px]">
+                            {patient._count.evaluations} aval.
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-2 text-xs text-muted-foreground flex-wrap">
+                        <span>{age} anos</span>
+                        <span>·</span>
+                        <span>{EDUCATION_LABELS[patient.educationLevel]}</span>
+                      </div>
                     </div>
-                    <div className="flex gap-3 text-sm text-muted-foreground flex-wrap">
-                      <span>{age} anos</span>
-                      <span aria-hidden="true">·</span>
-                      <span>{EDUCATION_LABELS[patient.educationLevel]}</span>
-                      {patient.occupation && (
-                        <>
-                          <span aria-hidden="true">·</span>
-                          <span>{patient.occupation}</span>
-                        </>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground/70">
-                      Cadastrado em {formatDate(new Date(patient.createdAt))}
-                    </p>
                   </div>
 
                   <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/patients/${patient.id}`}>Ver perfil</Link>
+                    <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
+                      <Link href={`/patients/${patient.id}`}>Perfil</Link>
                     </Button>
-                    <Button size="sm" asChild>
-                      <Link href={`/evaluations/new?patientId=${patient.id}`}>
-                        Nova Avaliação
-                      </Link>
+                    <Button size="sm" asChild className="flex-1 sm:flex-none">
+                      <Link href={`/evaluations/new?patientId=${patient.id}`}>+ Avaliação</Link>
                     </Button>
                   </div>
                 </CardContent>

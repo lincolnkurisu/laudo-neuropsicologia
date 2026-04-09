@@ -45,24 +45,23 @@ export default async function PatientPage({ params }: PatientPageProps) {
     <div className="space-y-6">
 
       {/* Cabeçalho */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar name={patient.fullName} size="xl" />
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Avatar name={patient.fullName} size="lg" />
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold tracking-tight">{patient.fullName}</h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{patient.fullName}</h1>
               <Badge variant="outline">{GENDER_LABELS[patient.gender]}</Badge>
             </div>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {age} anos · {EDUCATION_LABELS[patient.educationLevel]}
-              {patient.occupation ? ` · ${patient.occupation}` : ""}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground">
               Cadastrado em {formatDate(patient.createdAt)}
             </p>
           </div>
         </div>
-        <Button asChild className="shrink-0">
+        <Button asChild className="shrink-0 w-full sm:w-auto">
           <Link href={`/evaluations/new?patientId=${patient.id}`}>
             <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             Nova Avaliação

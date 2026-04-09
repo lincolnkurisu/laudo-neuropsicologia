@@ -133,6 +133,8 @@ model Evaluation {
   testBpa2   TestBpa2?
   testWasi   TestWasi?
   testFdt    TestFdt?
+  testRavlt  TestRavlt?
+  images     EvaluationImage[]
 
   @@index([userId])
   @@index([patientId])
@@ -301,4 +303,62 @@ model TestFdt {
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── Test: RAVLT ──────────────────────────────────────────────────────────────
+
+model TestRavlt {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  trialA1 Int
+  trialA2 Int
+  trialA3 Int
+  trialA4 Int
+  trialA5 Int
+  trialB1 Int
+  recallShort Int
+  recallLong  Int
+
+  recognitionHits Int?
+  recognitionFP   Int?
+
+  totalLearning          Int?
+  learningSlope          Int?
+  proactiveInhibition    Int?
+  retroactiveInhibition  Int?
+  savingsShortPct        Float?
+  savingsLongPct         Float?
+  recognitionIndex       Int?
+
+  percentileTotalLearning  Int?
+  percentileRecallShort    Int?
+  percentileRecallLong     Int?
+  percentileRecognition    Int?
+
+  classificationLearning      String?
+  classificationRecallShort   String?
+  classificationRecallLong    String?
+  interpretation              String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Evaluation Images ────────────────────────────────────────────────────────
+
+model EvaluationImage {
+  id           String     @id @default(cuid())
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  url          String
+  fileName     String
+  description  String?
+  testType     String?
+
+  uploadedAt   DateTime @default(now())
+
+  @@index([evaluationId])
 }

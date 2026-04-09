@@ -67,39 +67,37 @@ export default async function EvaluationsPage() {
 
             return (
               <Card key={ev.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="flex items-center gap-4 p-5">
-                  <Avatar name={ev.patient.fullName} size="md" />
-
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">{ev.title}</span>
-                      <Badge variant={cfg.variant} className="text-[10px]">{cfg.label}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Paciente:{" "}
-                      <Link href={`/patients/${ev.patient.id}`} className="text-primary hover:underline font-medium">
-                        {ev.patient.fullName}
-                      </Link>
-                    </p>
-                    {/* Barra de progresso */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progress}%` }} />
+                <CardContent className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 sm:p-5">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Avatar name={ev.patient.fullName} size="md" />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm truncate">{ev.title}</span>
+                        <Badge variant={cfg.variant} className="text-[10px] shrink-0">{cfg.label}</Badge>
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">{testsDone}/{testsTotal} testes</span>
+                      <p className="text-xs text-muted-foreground truncate">
+                        <Link href={`/patients/${ev.patient.id}`} className="text-primary hover:underline font-medium">
+                          {ev.patient.fullName}
+                        </Link>
+                        {" · "}{formatDate(ev.createdAt)}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground shrink-0">{testsDone}/{testsTotal}</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">Iniciada em {formatDate(ev.createdAt)}</p>
                   </div>
-
                   <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
                       <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
                     </Button>
-                    {ev.status === "COMPLETED" || ev.status === "REPORT_GENERATED" ? (
-                      <Button size="sm" asChild>
-                        <Link href={`/reports/${ev.id}`}>Ver Laudo</Link>
+                    {(ev.status === "COMPLETED" || ev.status === "REPORT_GENERATED") && (
+                      <Button size="sm" asChild className="flex-1 sm:flex-none">
+                        <Link href={`/reports/${ev.id}`}>Laudo</Link>
                       </Button>
-                    ) : null}
+                    )}
                   </div>
                 </CardContent>
               </Card>
