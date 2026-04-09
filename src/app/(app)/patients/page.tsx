@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
-import { formatDate, calculateAge } from "@/lib/utils";
+import { calculateAge } from "@/lib/utils";
 import { EDUCATION_LABELS, GENDER_LABELS } from "@/types";
 import type { EducationLevel, Gender } from "@/generated/prisma";
 

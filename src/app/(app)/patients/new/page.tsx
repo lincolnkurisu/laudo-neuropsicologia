@@ -140,7 +140,7 @@ export default function NewPatientPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Data de nascimento */}
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Data de nascimento *</Label>
@@ -222,7 +222,7 @@ export default function NewPatientPage() {
             <CardTitle className="text-lg">Contato</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone</Label>
                 <Input

@@ -77,8 +77,8 @@ export default async function DashboardPage() {
               )}
             </div>
             <div className="mt-4">
-              <p className="text-4xl font-bold tracking-tight">{value}</p>
-              <p className="mt-0.5 text-sm font-medium text-white/80">{label}</p>
+              <p className="text-3xl sm:text-4xl font-bold tracking-tight">{value}</p>
+              <p className="mt-0.5 text-xs sm:text-sm font-medium text-white/80">{label}</p>
             </div>
           </div>
         ))}
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                   const cfg = lastEval ? STATUS_CONFIG[lastEval.status] : null;
                   return (
                     <Link key={patient.id} href={`/patients/${patient.id}`}
-                      className={`flex items-center gap-4 px-6 py-4 transition-colors hover:bg-accent/50
+                      className={`flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 transition-colors hover:bg-accent/50
                         ${idx !== recentPatients.length - 1 ? "border-b" : ""}`}>
                       <Avatar name={patient.fullName} size="md" />
                       <div className="min-w-0 flex-1">
