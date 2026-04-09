@@ -35,13 +35,14 @@ enum EvaluationStatus {
 // ─── User (Psicólogo / Clínica) ──────────────────────────────────────────────
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String
-  crp         String?
-  clinicName  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String?
+  crp          String?
+  clinicName   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   patients    Patient[]
   evaluations Evaluation[]

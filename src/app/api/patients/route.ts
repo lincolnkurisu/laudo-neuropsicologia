@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-
 
 const createPatientSchema = z.object({
   fullName: z.string().min(3),
@@ -20,14 +20,16 @@ const createPatientSchema = z.object({
   cpf: z.string().optional().nullable(),
 });
 
-// GET /api/patients — lista todos os pacientes do usuário autenticado
+// GET /api/patients
 export async function GET() {
   try {
-    // TODO: extrair userId da sessão (NextAuth / Clerk)
-    const userId = "demo-user-id";
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
 
     const patients = await prisma.patient.findMany({
-      where: { userId },
+      where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       include: {
         _count: { select: { evaluations: true, anamneses: true } },
@@ -41,9 +43,14 @@ export async function GET() {
   }
 }
 
-// POST /api/patients — cria novo paciente
+// POST /api/patients
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
     const body = await req.json();
     const parsed = createPatientSchema.safeParse(body);
 
@@ -52,23 +59,10 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
-    // TODO: extrair userId da sessão
-    const userId = "demo-user-id";
-
-    // Garante que o usuário demo exista no banco
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        email: "demo@neuropsi.app",
-        name: "Usuário Demo",
-      },
-    });
 
     const patient = await prisma.patient.create({
       data: {
-        userId,
+        userId: session.user.id,
         fullName: data.fullName,
         dateOfBirth: new Date(data.dateOfBirth),
         gender: data.gender,

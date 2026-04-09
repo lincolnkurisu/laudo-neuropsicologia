@@ -2,10 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-
-// TODO: substituir pelo userId real da sessão (NextAuth / Clerk)
-const DEMO_USER_ID = "demo-user-id";
 
 const profileSchema = z.object({
   name: z.string().min(3, "Nome deve ter ao menos 3 caracteres"),
@@ -14,18 +12,23 @@ const profileSchema = z.object({
   clinicName: z.string().optional().nullable(),
 });
 
-// GET /api/users/profile — retorna perfil do usuário logado
+// GET /api/users/profile
 export async function GET() {
   try {
-    const user = await prisma.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        email: "demo@neuropsi.app",
-        name: "Dr. Psicólogo",
-      },
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, email: true, crp: true, clinicName: true },
     });
+
+    if (!user) {
+      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+    }
+
     return NextResponse.json(user);
   } catch (err) {
     console.error("[GET /api/users/profile]", err);
@@ -33,9 +36,14 @@ export async function GET() {
   }
 }
 
-// PUT /api/users/profile — atualiza perfil do usuário logado
+// PUT /api/users/profile
 export async function PUT(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
     const body = await req.json();
     const parsed = profileSchema.safeParse(body);
 
@@ -43,21 +51,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const user = await prisma.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
         name: parsed.data.name,
         email: parsed.data.email,
         crp: parsed.data.crp ?? null,
         clinicName: parsed.data.clinicName ?? null,
       },
-      create: {
-        id: DEMO_USER_ID,
-        name: parsed.data.name,
-        email: parsed.data.email,
-        crp: parsed.data.crp ?? null,
-        clinicName: parsed.data.clinicName ?? null,
-      },
+      select: { id: true, name: true, email: true, crp: true, clinicName: true },
     });
 
     return NextResponse.json(user);

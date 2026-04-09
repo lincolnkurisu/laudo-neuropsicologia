@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
@@ -10,6 +11,7 @@ import {
   BrainCircuit,
   ChevronRight,
   Settings,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
@@ -43,18 +45,14 @@ const NAV_ITEMS = [
   },
 ];
 
-// ─── Usuário demo ─────────────────────────────────────────────────────────────
-
-const DEMO_USER = {
-  name: "Dr. Lincoln Kurisu",
-  crp: "CRP 06/123456",
-  plan: "Pro",
-};
-
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const userName = session?.user?.name ?? "Psicólogo";
+  const userEmail = session?.user?.email ?? "";
 
   return (
     <aside className="flex h-screen w-64 flex-col overflow-hidden"
@@ -100,7 +98,6 @@ export function Sidebar() {
                   : "text-[hsl(var(--sidebar-text))] hover:bg-[hsl(var(--sidebar-hover))]"
               )}
             >
-              {/* Ícone */}
               <div className={cn(
                 "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all",
                 active
@@ -115,7 +112,6 @@ export function Sidebar() {
                 )} aria-hidden="true" />
               </div>
 
-              {/* Texto */}
               <div className="min-w-0 flex-1">
                 <p className={cn(
                   "text-sm font-medium leading-none",
@@ -129,7 +125,6 @@ export function Sidebar() {
                 </p>
               </div>
 
-              {/* Indicador ativo */}
               {active && (
                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-indigo-400"
                               aria-hidden="true" />
@@ -141,36 +136,34 @@ export function Sidebar() {
 
       {/* ── Rodapé: Usuário ── */}
       <div className="mt-auto" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>
-        {/* Badge plano */}
-        <div className="px-4 pt-3 pb-0">
-          <div className="flex items-center gap-2 rounded-lg bg-indigo-500/10 px-3 py-2">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <p className="text-[11px] font-medium text-indigo-300">
-              Plano {DEMO_USER.plan} · Ativo
-            </p>
-          </div>
-        </div>
-
-        {/* Perfil */}
+        {/* Perfil + configurações */}
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-4 py-3 transition-colors
-                     hover:bg-white/5"
+          className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5"
         >
-          <Avatar name={DEMO_USER.name} size="sm"
-                  className="ring-2 ring-indigo-500/30" />
+          <Avatar name={userName} size="sm" className="ring-2 ring-indigo-500/30" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-slate-200">
-              {DEMO_USER.name}
-            </p>
-            <p className="text-[11px]" style={{ color: "hsl(var(--sidebar-muted))" }}>
-              {DEMO_USER.crp}
+            <p className="truncate text-sm font-medium text-slate-200">{userName}</p>
+            <p className="truncate text-[11px]" style={{ color: "hsl(var(--sidebar-muted))" }}>
+              {userEmail}
             </p>
           </div>
-          <Settings className="h-3.5 w-3.5 shrink-0 text-slate-500
-                               hover:text-slate-300 transition-colors"
+          <Settings className="h-3.5 w-3.5 shrink-0 text-slate-500 hover:text-slate-300 transition-colors"
                     aria-hidden="true" />
         </Link>
+
+        {/* Botão de sair */}
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex w-full items-center gap-3 px-4 py-2.5 text-left
+                     transition-colors hover:bg-white/5"
+          style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}
+        >
+          <LogOut className="h-4 w-4 text-slate-500" aria-hidden="true" />
+          <span className="text-sm" style={{ color: "hsl(var(--sidebar-muted))" }}>
+            Sair
+          </span>
+        </button>
       </div>
     </aside>
   );
