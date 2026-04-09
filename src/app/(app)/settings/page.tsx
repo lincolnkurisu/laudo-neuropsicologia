@@ -94,7 +94,7 @@ export default function SettingsPage() {
 
       {/* Preview do perfil */}
       <Card className="border-0 bg-gradient-to-r from-indigo-50 to-violet-50">
-        <CardContent className="flex items-center gap-5 p-6">
+        <CardContent className="flex items-center gap-4 sm:gap-5 p-4 sm:p-6">
           <Avatar name={name || "Psicólogo"} size="xl" />
           <div>
             <p className="text-xl font-bold text-foreground">{name || "—"}</p>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Feedback e botão */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3">
           {saveError && (
             <p className="text-sm text-destructive">{saveError}</p>
           )}
@@ -188,7 +188,7 @@ export default function SettingsPage() {
               Salvo com sucesso!
             </span>
           )}
-          <Button type="submit" disabled={isSubmitting || !isDirty}>
+          <Button type="submit" disabled={isSubmitting || !isDirty} className="w-full sm:w-auto">
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

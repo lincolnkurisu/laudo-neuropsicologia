@@ -65,7 +65,7 @@ export default async function DashboardPage() {
       {/* Cards de Estatística */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statCards.map(({ label, value, gradient, icon: Icon, trend }) => (
-          <div key={label} className={`${gradient} rounded-2xl p-5 text-white shadow-lg card-hover`}>
+          <div key={label} className={`${gradient} rounded-2xl p-4 sm:p-5 text-white shadow-lg card-hover`}>
             <div className="flex items-start justify-between">
               <div className="rounded-xl bg-white/20 p-2.5">
                 <Icon className="h-5 w-5" />
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         {/* Pacientes recentes */}
         <div className="lg:col-span-2">
           <Card className="h-full shadow-sm">
-            <div className="flex items-center justify-between border-b px-6 py-4">
+            <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
               <div>
                 <h2 className="font-semibold text-foreground">Pacientes Recentes</h2>
                 <p className="text-xs text-muted-foreground">Últimos cadastros</p>
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                   const cfg = lastEval ? STATUS_CONFIG[lastEval.status] : null;
                   return (
                     <Link key={patient.id} href={`/patients/${patient.id}`}
-                      className={`flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 transition-colors hover:bg-accent/50
+                      className={`flex items-center gap-3 px-4 sm:px-6 py-3 transition-colors hover:bg-accent/50
                         ${idx !== recentPatients.length - 1 ? "border-b" : ""}`}>
                       <Avatar name={patient.fullName} size="md" />
                       <div className="min-w-0 flex-1">
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
         {/* Avaliações em andamento */}
         <div>
           <Card className="h-full shadow-sm">
-            <div className="flex items-center justify-between border-b px-5 py-4">
+            <div className="flex items-center justify-between border-b px-4 sm:px-5 py-3 sm:py-4">
               <div>
                 <h2 className="font-semibold text-foreground">Em Andamento</h2>
                 <p className="text-xs text-muted-foreground">Avaliações ativas</p>

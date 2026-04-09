@@ -90,7 +90,7 @@ function NewEvaluationForm() {
                   id="patient"
                   value={patientId}
                   onChange={(e) => setPatientId(e.target.value)}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2
+                  className="w-full rounded-md border border-input bg-background px-3 py-2.5
                              text-sm ring-offset-background focus:outline-none focus:ring-2
                              focus:ring-ring focus:ring-offset-2"
                   required
@@ -118,11 +118,11 @@ function NewEvaluationForm() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3 justify-end">
-          <Button type="button" variant="outline" onClick={() => router.back()} disabled={submitting}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <Button type="button" variant="outline" onClick={() => router.back()} disabled={submitting} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" disabled={submitting || loadingPatients || patients.length === 0}>
+          <Button type="submit" disabled={submitting || loadingPatients || patients.length === 0} className="w-full sm:w-auto">
             {submitting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Criando...</> : "Iniciar Avaliação"}
           </Button>
         </div>

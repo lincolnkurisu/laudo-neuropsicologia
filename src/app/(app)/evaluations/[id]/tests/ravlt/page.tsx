@@ -140,7 +140,7 @@ export default function RavltPage() {
               Número de palavras recordadas em cada ensaio (0–15)
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-5 gap-4">
+          <CardContent className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4">
             {(["trialA1", "trialA2", "trialA3", "trialA4", "trialA5"] as const).map(
               (field, idx) => (
                 <div key={field} className="space-y-1">
@@ -182,8 +182,8 @@ export default function RavltPage() {
               Número de palavras recordadas da Lista B (0–15)
             </CardDescription>
           </CardHeader>
-          <CardContent className="w-32">
-            <div className="space-y-1">
+          <CardContent>
+            <div className="space-y-1 max-w-[8rem]">
               <Label htmlFor="trialB1">B1</Label>
               <Input
                 id="trialB1"
@@ -204,7 +204,7 @@ export default function RavltPage() {
           <CardHeader>
             <CardTitle className="text-base">Recordação</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="recallShort">Recordação imediata (A6) — após Lista B</Label>
               <Input
@@ -242,7 +242,7 @@ export default function RavltPage() {
               Deixe em branco se o reconhecimento não foi aplicado
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="recognitionHits">Acertos (máx. 15)</Label>
               <Input
@@ -276,11 +276,11 @@ export default function RavltPage() {
           </p>
         )}
 
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" asChild>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pb-6">
+          <Button type="button" variant="outline" asChild className="w-full sm:w-auto">
             <Link href={`/evaluations/${id}`}>Cancelar</Link>
           </Button>
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {submitting ? "Salvando…" : "Salvar RAVLT"}
           </Button>

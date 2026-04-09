@@ -70,18 +70,21 @@ export default async function PatientPage({ params }: PatientPageProps) {
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList>
-          <TabsTrigger value="profile">
-            <User className="mr-2 h-4 w-4" aria-hidden="true" />
-            Dados
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="profile" className="flex-1 sm:flex-none">
+            <User className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+            <span className="hidden sm:inline">Dados</span>
+            <span className="sm:hidden">Dados</span>
           </TabsTrigger>
-          <TabsTrigger value="anamneses">
-            <ClipboardList className="mr-2 h-4 w-4" aria-hidden="true" />
-            Anamneses ({patient.anamneses.length})
+          <TabsTrigger value="anamneses" className="flex-1 sm:flex-none">
+            <ClipboardList className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+            <span className="hidden sm:inline">Anamneses ({patient.anamneses.length})</span>
+            <span className="sm:hidden">Anamneses</span>
           </TabsTrigger>
-          <TabsTrigger value="evaluations">
-            <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
-            Avaliações ({patient.evaluations.length})
+          <TabsTrigger value="evaluations" className="flex-1 sm:flex-none">
+            <FileText className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+            <span className="hidden sm:inline">Avaliações ({patient.evaluations.length})</span>
+            <span className="sm:hidden">Avaliações</span>
           </TabsTrigger>
         </TabsList>
 
@@ -128,12 +131,12 @@ export default async function PatientPage({ params }: PatientPageProps) {
         <TabsContent value="anamneses">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <div>
                   <CardTitle>Anamneses</CardTitle>
                   <CardDescription>Histórico clínico e relatos do paciente.</CardDescription>
                 </div>
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" size="sm" className="shrink-0 w-full sm:w-auto">
                   <Link href={`/patients/${patient.id}/anamnesis/new`}>+ Nova Anamnese</Link>
                 </Button>
               </div>
@@ -148,14 +151,14 @@ export default async function PatientPage({ params }: PatientPageProps) {
                 <div className="space-y-3">
                   {patient.anamneses.map((a) => (
                     <div key={a.id}
-                      className="flex items-center justify-between rounded-lg border p-4">
-                      <div>
+                      className="flex items-start sm:items-center justify-between gap-3 rounded-lg border p-3 sm:p-4">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm">{a.mainComplaint}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           Registrada em {formatDate(a.createdAt)}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" asChild>
+                      <Button variant="outline" size="sm" asChild className="shrink-0">
                         <Link href={`/patients/${patient.id}/anamnesis/${a.id}`}>Ver</Link>
                       </Button>
                     </div>
@@ -170,12 +173,12 @@ export default async function PatientPage({ params }: PatientPageProps) {
         <TabsContent value="evaluations">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
                 <div>
                   <CardTitle>Avaliações</CardTitle>
                   <CardDescription>Sessões de avaliação neuropsicológica.</CardDescription>
                 </div>
-                <Button asChild>
+                <Button asChild size="sm" className="shrink-0 w-full sm:w-auto">
                   <Link href={`/evaluations/new?patientId=${patient.id}`}>
                     + Nova Avaliação
                   </Link>
@@ -194,15 +197,15 @@ export default async function PatientPage({ params }: PatientPageProps) {
                     const cfg = STATUS_CONFIG[ev.status];
                     return (
                       <div key={ev.id}
-                        className="flex items-center justify-between rounded-lg border p-4">
-                        <div>
-                          <p className="font-medium text-sm">{ev.title}</p>
+                        className="flex items-start sm:items-center justify-between gap-3 rounded-lg border p-3 sm:p-4">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{ev.title}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             Iniciada em {formatDate(ev.createdAt)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant={cfg.variant} className="hidden sm:inline-flex">{cfg.label}</Badge>
                           <Button variant="outline" size="sm" asChild>
                             <Link href={`/evaluations/${ev.id}`}>Abrir</Link>
                           </Button>
