@@ -92,11 +92,11 @@ function BfpForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        neuroticismoRaw:  Number(fields.neuroticismo),
-        extroversaoRaw:   Number(fields.extroversao),
-        socializacaoRaw:  Number(fields.socializacao),
-        realizacaoRaw:    Number(fields.realizacao),
-        aberturaRaw:      Number(fields.abertura),
+        rawNeuroticismo: Number(fields.neuroticismo),
+        rawExtroversao:  Number(fields.extroversao),
+        rawSocializacao: Number(fields.socializacao),
+        rawRealizacao:   Number(fields.realizacao),
+        rawAbertura:     Number(fields.abertura),
       }),
     });
     if (!res.ok) { setFormError("Erro ao salvar. Tente novamente."); setSubmitting(false); return; }
