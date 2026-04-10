@@ -163,6 +163,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     return NextResponse.json(saved, { status: 200 });
   } catch (err) {
     console.error("[POST /api/evaluations/[id]/tests/ravlt]", err);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "Erro interno", detail: message }, { status: 500 });
   }
 }
