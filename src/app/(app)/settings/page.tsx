@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { signOut } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar } from "@/components/ui/avatar";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,22 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      const res = await fetch("/api/account", { method: "DELETE" });
+      if (!res.ok) { setDeleteError("Erro ao excluir conta. Tente novamente."); setDeleting(false); return; }
+      await signOut({ callbackUrl: "/login" });
+    } catch {
+      setDeleteError("Erro de conexão. Tente novamente.");
+      setDeleting(false);
+    }
+  }
 
   const {
     register,
@@ -200,6 +217,55 @@ export default function SettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* ── Zona de Perigo ─────────────────────────────────────────────── */}
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <TriangleAlert className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-base text-destructive">Zona de Perigo</CardTitle>
+          </div>
+          <CardDescription>
+            Ações irreversíveis. Todos os seus pacientes, avaliações e laudos serão permanentemente excluídos.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!confirmDelete ? (
+            <Button
+              variant="outline"
+              className="border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground w-full sm:w-auto"
+              onClick={() => setConfirmDelete(true)}
+            >
+              Excluir minha conta
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-destructive">
+                Tem certeza? Esta ação não pode ser desfeita. Todos os seus dados serão apagados permanentemente.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="destructive"
+                  disabled={deleting}
+                  onClick={handleDeleteAccount}
+                  className="w-full sm:w-auto"
+                >
+                  {deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Excluindo...</> : "Sim, excluir minha conta"}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={deleting}
+                  onClick={() => setConfirmDelete(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+              </div>
+              {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

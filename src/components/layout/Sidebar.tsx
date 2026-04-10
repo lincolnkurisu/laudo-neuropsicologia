@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
@@ -34,6 +35,7 @@ export function Sidebar({ onClose }: SidebarProps) {
 
   const userName  = session?.user?.name  ?? "Psicólogo";
   const userEmail = session?.user?.email ?? "";
+  const isAdmin   = session?.user?.isAdmin ?? false;
 
   return (
     <aside
@@ -122,6 +124,40 @@ export function Sidebar({ onClose }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* ── Admin ── */}
+      {isAdmin && (
+        <div className="px-3 pb-2">
+          <Link
+            href="/admin"
+            onClick={onClose}
+            className={cn(
+              "group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-150",
+              pathname.startsWith("/admin")
+                ? "nav-item-active"
+                : "text-[hsl(var(--sidebar-text))] hover:bg-[hsl(var(--sidebar-hover))]"
+            )}
+          >
+            <div className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all",
+              pathname.startsWith("/admin") ? "bg-amber-500/20" : "bg-white/5 group-hover:bg-white/10"
+            )}>
+              <ShieldCheck className={cn(
+                "h-4 w-4",
+                pathname.startsWith("/admin") ? "text-amber-400" : "text-slate-400 group-hover:text-slate-200"
+              )} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={cn("text-sm font-medium leading-none", pathname.startsWith("/admin") ? "text-amber-300" : "text-slate-200")}>
+                Administração
+              </p>
+              <p className="mt-0.5 truncate text-[11px]" style={{ color: "hsl(var(--sidebar-muted))" }}>
+                Gerenciar usuários
+              </p>
+            </div>
+          </Link>
+        </div>
+      )}
 
       {/* ── Rodapé: Usuário ── */}
       <div className="mt-auto" style={{ borderTop: "1px solid hsl(var(--sidebar-border))" }}>

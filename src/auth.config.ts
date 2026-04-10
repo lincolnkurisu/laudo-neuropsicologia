@@ -30,10 +30,14 @@ export const authConfig: NextAuthConfig = {
     },
     jwt({ token, user }) {
       if (user?.id) token.id = user.id;
+      if (typeof (user as { isAdmin?: boolean })?.isAdmin === "boolean") {
+        token.isAdmin = (user as { isAdmin?: boolean }).isAdmin;
+      }
       return token;
     },
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
+      session.user.isAdmin = token.isAdmin ?? false;
       return session;
     },
   },
