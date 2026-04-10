@@ -128,13 +128,19 @@ model Evaluation {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
-  testAsrs18 TestAsrs18?
-  testBfp    TestBfp?
-  testBpa2   TestBpa2?
-  testWasi   TestWasi?
-  testFdt    TestFdt?
-  testRavlt  TestRavlt?
-  images     EvaluationImage[]
+  testAsrs18   TestAsrs18?
+  testBfp      TestBfp?
+  testBpa2     TestBpa2?
+  testWasi     TestWasi?
+  testFdt      TestFdt?
+  testRavlt    TestRavlt?
+  testMoca     TestMoca?
+  testBdi2     TestBdi2?
+  testBai      TestBai?
+  testTmt      TestTmt?
+  testRey      TestRey?
+  testFluencia TestFluencia?
+  images       EvaluationImage[]
 
   @@index([userId])
   @@index([patientId])
@@ -341,6 +347,178 @@ model TestRavlt {
   classificationRecallShort   String?
   classificationRecallLong    String?
   interpretation              String?
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: MoCA ───────────────────────────────────────────────────────────────
+
+model TestMoca {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // Domain scores
+  visuospatial Int   // 0-5 (trilha, cubo, relógio)
+  naming       Int   // 0-3
+  attention    Int   // 0-6 (dígitos, vigilância, subtração)
+  language     Int   // 0-3 (repetição, fluência)
+  abstraction  Int   // 0-2
+  recall       Int   // 0-5
+  orientation  Int   // 0-6
+
+  totalScore    Int
+  educationBonus Boolean  // +1 ponto se ≤ 12 anos de escolaridade
+  adjustedScore  Int
+  classification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: BDI-II ─────────────────────────────────────────────────────────────
+
+model TestBdi2 {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // 21 itens, 0-3 cada
+  item1  Int
+  item2  Int
+  item3  Int
+  item4  Int
+  item5  Int
+  item6  Int
+  item7  Int
+  item8  Int
+  item9  Int
+  item10 Int
+  item11 Int
+  item12 Int
+  item13 Int
+  item14 Int
+  item15 Int
+  item16 Int
+  item17 Int
+  item18 Int
+  item19 Int
+  item20 Int
+  item21 Int
+
+  totalScore     Int
+  classification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: BAI ────────────────────────────────────────────────────────────────
+
+model TestBai {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // 21 itens, 0-3 cada
+  item1  Int
+  item2  Int
+  item3  Int
+  item4  Int
+  item5  Int
+  item6  Int
+  item7  Int
+  item8  Int
+  item9  Int
+  item10 Int
+  item11 Int
+  item12 Int
+  item13 Int
+  item14 Int
+  item15 Int
+  item16 Int
+  item17 Int
+  item18 Int
+  item19 Int
+  item20 Int
+  item21 Int
+
+  totalScore     Int
+  classification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: TMT ────────────────────────────────────────────────────────────────
+
+model TestTmt {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  partATime   Float   // segundos
+  partAErrors Int
+  partBTime   Float   // segundos
+  partBErrors Int
+  ratio       Float   // B / A
+
+  partAPercentile Int?
+  partBPercentile Int?
+
+  partAClassification String
+  partBClassification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: Figura de Rey ──────────────────────────────────────────────────────
+
+model TestRey {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  copyScore  Float   // 0-36
+  copyTime   Float?  // segundos (opcional)
+  recallScore Float  // 0-36
+  recallTime  Float? // segundos (opcional)
+
+  savings Float   // (recallScore / copyScore) × 100
+
+  copyPercentile   Int?
+  recallPercentile Int?
+
+  copyClassification   String
+  recallClassification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: Fluência Verbal ────────────────────────────────────────────────────
+
+model TestFluencia {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // Fluência fonêmica (FAS)
+  fasF  Int
+  fasA  Int
+  fasS  Int
+  fasTotal Int   // F + A + S
+
+  // Fluência semântica
+  animais Int
+
+  fasPercentile     Int?
+  animaisPercentile Int?
+
+  fasClassification     String
+  animaisClassification String
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
