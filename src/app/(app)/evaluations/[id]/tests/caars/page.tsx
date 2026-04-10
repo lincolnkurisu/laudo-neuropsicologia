@@ -101,7 +101,7 @@ function CaarsForm() {
       <div>
         <h1 className="text-xl font-bold">CAARS</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Conners' Adult ADHD Rating Scales — insira os escores T obtidos no manual.
+          Conners&apos; Adult ADHD Rating Scales — insira os escores T obtidos no manual.
         </p>
       </div>
 

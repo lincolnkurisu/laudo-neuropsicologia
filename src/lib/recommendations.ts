@@ -161,7 +161,7 @@ export function getTestRecommendations(
 
   const isIdoso   = age >= 60;
   const isAdolesc = age < 18;
-  const lowEduc   = ["NO_FORMAL_EDUCATION", "INCOMPLETE_ELEMENTARY", "COMPLETE_ELEMENTARY"].includes(educationLevel);
+  const _lowEduc  = ["NO_FORMAL_EDUCATION", "INCOMPLETE_ELEMENTARY", "COMPLETE_ELEMENTARY"].includes(educationLevel); void _lowEduc;
 
   const recs: Map<string, TestRecommendation> = new Map();
 
