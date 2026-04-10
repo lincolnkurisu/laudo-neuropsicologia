@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle2, Circle, ChevronRight, ClipboardEdit } from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, ClipboardEdit, Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { formatDate, calculateAge } from "@/lib/utils";
 import { STATUS_CONFIG } from "@/lib/constants";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getTestRecommendations, type TestRecommendation } from "@/lib/recommendations";
 
 const TESTS = [
   // ── Cognitivo / Inteligência ──────────────────────────────────────────────
@@ -29,6 +30,12 @@ const TESTS = [
   { key: "testBfp",      label: "BFP",       slug: "bfp",      description: "Bateria Fatorial de Personalidade",                 group: "Personalidade" },
 ] as const;
 
+const PRIORITY_CONFIG = {
+  essencial:    { label: "Essencial",    variant: "destructive" as const, dot: "bg-red-500" },
+  recomendado:  { label: "Recomendado",  variant: "default"     as const, dot: "bg-indigo-500" },
+  opcional:     { label: "Opcional",     variant: "secondary"   as const, dot: "bg-gray-400" },
+};
+
 interface Props { params: Promise<{ id: string }> }
 
 export default async function EvaluationPage({ params }: Props) {
@@ -40,7 +47,30 @@ export default async function EvaluationPage({ params }: Props) {
   const ev = await prisma.evaluation.findFirst({
     where: { id, userId: session.user.id },
     include: {
-      patient: { select: { id: true, fullName: true, dateOfBirth: true } },
+      patient: {
+        select: {
+          id: true,
+          fullName: true,
+          dateOfBirth: true,
+          educationLevel: true,
+          anamneses: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              mainComplaint: true,
+              complaintDuration: true,
+              medicalHistory: true,
+              learningDifficulties: true,
+              familyHistory: true,
+              currentMedications: true,
+              schoolHistory: true,
+              clinicalObservations: true,
+              behaviorDuringSession: true,
+              recentLifeEvents: true,
+            },
+          },
+        },
+      },
       testAsrs18:   { select: { id: true } },
       testBfp:      { select: { id: true } },
       testBpa2:     { select: { id: true } },
@@ -61,6 +91,14 @@ export default async function EvaluationPage({ params }: Props) {
   const cfg = STATUS_CONFIG[ev.status];
   const testsDone = TESTS.filter((t) => ev[t.key] !== null).length;
   const progress  = Math.round((testsDone / TESTS.length) * 100);
+
+  // ── Recomendações clínicas ────────────────────────────────────────────────
+  const latestAnamnesis = ev.patient.anamneses[0] ?? null;
+  const patientAge = ev.patient.dateOfBirth ? calculateAge(ev.patient.dateOfBirth) : 30;
+  const recommendations: TestRecommendation[] = latestAnamnesis
+    ? getTestRecommendations(latestAnamnesis, patientAge, ev.patient.educationLevel)
+    : [];
+  const recMap = new Map(recommendations.map((r) => [r.testKey, r]));
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -92,6 +130,65 @@ export default async function EvaluationPage({ params }: Props) {
         <Badge variant={cfg.variant} className="shrink-0">{cfg.label}</Badge>
       </div>
 
+      {/* Bateria Sugerida */}
+      {latestAnamnesis ? (
+        <Card className="border-indigo-200 dark:border-indigo-800">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-indigo-500 shrink-0" />
+              <CardTitle className="text-base">Bateria Sugerida</CardTitle>
+            </div>
+            <CardDescription>Recomendações baseadas na anamnese do paciente</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recommendations.map((rec) => {
+              const pCfg = PRIORITY_CONFIG[rec.priority];
+              const done = ev[rec.testKey as keyof typeof ev] !== null;
+              return (
+                <div key={rec.testKey}
+                  className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${done ? "opacity-60" : ""}`}>
+                  <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${pCfg.dot}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-medium text-sm">{rec.label}</span>
+                      <Badge variant={pCfg.variant} className="text-[10px] py-0 px-1.5">{pCfg.label}</Badge>
+                      {done && <Badge variant="success" className="text-[10px] py-0 px-1.5">Aplicado</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{rec.reasons[0]}</p>
+                    {rec.reasons.length > 1 && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">+{rec.reasons.length - 1} razão(ões) adicionais</p>
+                    )}
+                  </div>
+                  {!done && (
+                    <Button variant="outline" size="sm" asChild className="h-7 text-xs px-2.5 shrink-0">
+                      <Link href={`/evaluations/${id}/tests/${rec.slug}`}>
+                        <ClipboardEdit className="h-3 w-3 mr-1" />
+                        Registrar
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed">
+          <CardContent className="flex items-center gap-3 py-4">
+            <Lightbulb className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Anamnese não encontrada</p>
+              <p className="text-xs text-muted-foreground">
+                Cadastre a anamnese do paciente para receber sugestões de bateria personalizada.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="ml-auto shrink-0">
+              <Link href={`/patients/${ev.patient.id}`}>Ver Paciente</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Progresso */}
       <Card>
         <CardHeader className="pb-3">
@@ -115,6 +212,8 @@ export default async function EvaluationPage({ params }: Props) {
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-1">{group}</p>
                 {groupTests.map((test) => {
                   const done = ev[test.key] !== null;
+                  const rec  = recMap.get(test.key);
+                  const pCfg = rec ? PRIORITY_CONFIG[rec.priority] : null;
                   return (
                     <div key={test.key}
                       className="flex items-center gap-3 rounded-lg border p-3 sm:p-4">
@@ -123,11 +222,21 @@ export default async function EvaluationPage({ params }: Props) {
                         : <Circle className="h-5 w-5 text-muted-foreground shrink-0" />}
 
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm">{test.label}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="font-medium text-sm">{test.label}</p>
+                          {pCfg && (
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${pCfg.dot}`} title={pCfg.label} />
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground hidden sm:block">{test.description}</p>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
+                        {pCfg && (
+                          <Badge variant={pCfg.variant} className="text-[10px] hidden md:inline-flex">
+                            {pCfg.label}
+                          </Badge>
+                        )}
                         <Badge variant={done ? "success" : "secondary"} className="text-[10px] hidden sm:inline-flex">
                           {done ? "Aplicado" : "Pendente"}
                         </Badge>
