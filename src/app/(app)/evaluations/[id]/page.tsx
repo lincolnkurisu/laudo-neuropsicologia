@@ -13,21 +13,27 @@ import { getTestRecommendations, type TestRecommendation } from "@/lib/recommend
 
 const TESTS = [
   // ── Cognitivo / Inteligência ──────────────────────────────────────────────
-  { key: "testWasi",     label: "WASI",      slug: "wasi",     description: "Escala Wechsler Abreviada de Inteligência",        group: "Cognitivo" },
-  { key: "testMoca",     label: "MoCA",      slug: "moca",     description: "Montreal Cognitive Assessment — triagem cognitiva", group: "Cognitivo" },
+  { key: "testWasi",         label: "WASI",            slug: "wasi",          description: "Escala Wechsler Abreviada de Inteligência",          group: "Cognitivo" },
+  { key: "testMoca",         label: "MoCA",            slug: "moca",          description: "Montreal Cognitive Assessment — triagem cognitiva",   group: "Cognitivo" },
   // ── Memória ───────────────────────────────────────────────────────────────
-  { key: "testRavlt",    label: "RAVLT",     slug: "ravlt",    description: "Aprendizagem Auditivo-Verbal de Rey",               group: "Memória" },
-  { key: "testRey",      label: "Rey",       slug: "rey",      description: "Figura Complexa de Rey — memória visuoespacial",    group: "Memória" },
+  { key: "testRavlt",        label: "RAVLT",           slug: "ravlt",         description: "Aprendizagem Auditivo-Verbal de Rey",                 group: "Memória" },
+  { key: "testRey",          label: "Rey",             slug: "rey",           description: "Figura Complexa de Rey — memória visuoespacial",      group: "Memória" },
   // ── Atenção / Funções Executivas ─────────────────────────────────────────
-  { key: "testBpa2",     label: "BPA-2",     slug: "bpa2",     description: "Bateria de Provas de Atenção",                     group: "Atenção" },
-  { key: "testFdt",      label: "FDT",       slug: "fdt",      description: "Five Digit Test — inibição e flexibilidade",        group: "Atenção" },
-  { key: "testTmt",      label: "TMT A/B",   slug: "tmt",      description: "Trail Making Test — atenção e funções executivas",  group: "Atenção" },
-  { key: "testFluencia", label: "Fluência",  slug: "fluencia", description: "Fluência Verbal Fonêmica (FAS) e Semântica",        group: "Linguagem" },
+  { key: "testBpa2",         label: "BPA-2",           slug: "bpa2",          description: "Bateria de Provas de Atenção",                        group: "Atenção" },
+  { key: "testFdt",          label: "FDT",             slug: "fdt",           description: "Five Digit Test — inibição e flexibilidade",           group: "Atenção" },
+  { key: "testTmt",          label: "TMT A/B",         slug: "tmt",           description: "Trail Making Test — atenção e funções executivas",     group: "Atenção" },
+  { key: "testCtp",          label: "CTP",             slug: "ctp",           description: "Teste de Performance Contínua — atenção sustentada",  group: "Atenção" },
+  { key: "testWcst",         label: "WCST",            slug: "wcst",          description: "Wisconsin Card Sorting Test — flexibilidade cognitiva", group: "Executivo" },
+  { key: "testTorreLondres", label: "Torre de Londres", slug: "torre-londres", description: "Torre de Londres — planejamento e resolução de problemas", group: "Executivo" },
+  { key: "testFluencia",     label: "Fluência",        slug: "fluencia",      description: "Fluência Verbal Fonêmica (FAS) e Semântica",           group: "Linguagem" },
   // ── Humor / Personalidade ─────────────────────────────────────────────────
-  { key: "testBdi2",     label: "BDI-II",    slug: "bdi2",     description: "Inventário de Depressão de Beck (21 itens)",        group: "Humor" },
-  { key: "testBai",      label: "BAI",       slug: "bai",      description: "Inventário de Ansiedade de Beck (21 itens)",        group: "Humor" },
-  { key: "testAsrs18",   label: "ASRS-18",   slug: "asrs18",   description: "Rastreio de TDAH em Adultos (18 itens)",            group: "Humor" },
-  { key: "testBfp",      label: "BFP",       slug: "bfp",      description: "Bateria Fatorial de Personalidade",                 group: "Personalidade" },
+  { key: "testBdi2",         label: "BDI-II",          slug: "bdi2",          description: "Inventário de Depressão de Beck (21 itens)",           group: "Humor" },
+  { key: "testBai",          label: "BAI",             slug: "bai",           description: "Inventário de Ansiedade de Beck (21 itens)",           group: "Humor" },
+  { key: "testAsrs18",       label: "ASRS-18",         slug: "asrs18",        description: "Rastreio de TDAH em Adultos (18 itens)",               group: "TDAH" },
+  { key: "testDiva2",        label: "DIVA 2.0",        slug: "diva2",         description: "Entrevista diagnóstica estruturada para TDAH (DSM-5)", group: "TDAH" },
+  { key: "testCaars",        label: "CAARS",           slug: "caars",         description: "Conners' Adult ADHD Rating Scales",                    group: "TDAH" },
+  { key: "testMfft",         label: "MFFT-BR",         slug: "mfft",          description: "Matching Familiar Figures Test — impulsividade",       group: "TDAH" },
+  { key: "testBfp",          label: "BFP",             slug: "bfp",           description: "Bateria Fatorial de Personalidade",                    group: "Personalidade" },
 ] as const;
 
 const PRIORITY_CONFIG = {
@@ -71,18 +77,24 @@ export default async function EvaluationPage({ params }: Props) {
           },
         },
       },
-      testAsrs18:   { select: { id: true } },
-      testBfp:      { select: { id: true } },
-      testBpa2:     { select: { id: true } },
-      testWasi:     { select: { id: true } },
-      testFdt:      { select: { id: true } },
-      testRavlt:    { select: { id: true } },
-      testMoca:     { select: { id: true } },
-      testBdi2:     { select: { id: true } },
-      testBai:      { select: { id: true } },
-      testTmt:      { select: { id: true } },
-      testRey:      { select: { id: true } },
-      testFluencia: { select: { id: true } },
+      testAsrs18:       { select: { id: true } },
+      testBfp:          { select: { id: true } },
+      testBpa2:         { select: { id: true } },
+      testWasi:         { select: { id: true } },
+      testFdt:          { select: { id: true } },
+      testRavlt:        { select: { id: true } },
+      testMoca:         { select: { id: true } },
+      testBdi2:         { select: { id: true } },
+      testBai:          { select: { id: true } },
+      testTmt:          { select: { id: true } },
+      testRey:          { select: { id: true } },
+      testFluencia:     { select: { id: true } },
+      testDiva2:        { select: { id: true } },
+      testCaars:        { select: { id: true } },
+      testCtp:          { select: { id: true } },
+      testWcst:         { select: { id: true } },
+      testTorreLondres: { select: { id: true } },
+      testMfft:         { select: { id: true } },
     },
   });
 
@@ -205,7 +217,7 @@ export default async function EvaluationPage({ params }: Props) {
           </div>
 
           {/* Lista de testes agrupados */}
-          {(["Cognitivo", "Memória", "Atenção", "Linguagem", "Humor", "Personalidade"] as const).map((group) => {
+          {(["Cognitivo", "Memória", "Atenção", "Executivo", "Linguagem", "Humor", "TDAH", "Personalidade"] as const).map((group) => {
             const groupTests = TESTS.filter((t) => t.group === group);
             return (
               <div key={group} className="space-y-1.5">

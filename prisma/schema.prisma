@@ -140,7 +140,13 @@ model Evaluation {
   testTmt      TestTmt?
   testRey      TestRey?
   testFluencia TestFluencia?
-  images       EvaluationImage[]
+  testDiva2    TestDiva2?
+  testCaars    TestCaars?
+  testCtp          TestCtp?
+  testWcst         TestWcst?
+  testTorreLondres TestTorreLondres?
+  testMfft         TestMfft?
+  images           EvaluationImage[]
 
   @@index([userId])
   @@index([patientId])
@@ -519,6 +525,208 @@ model TestFluencia {
 
   fasClassification     String
   animaisClassification String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: DIVA 2.0 ──────────────────────────────────────────────────────────
+
+model TestDiva2 {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // Inattention – adulthood (9 criteria)
+  iaAdult1 Boolean
+  iaAdult2 Boolean
+  iaAdult3 Boolean
+  iaAdult4 Boolean
+  iaAdult5 Boolean
+  iaAdult6 Boolean
+  iaAdult7 Boolean
+  iaAdult8 Boolean
+  iaAdult9 Boolean
+
+  // Inattention – childhood (9 criteria)
+  iaChild1 Boolean
+  iaChild2 Boolean
+  iaChild3 Boolean
+  iaChild4 Boolean
+  iaChild5 Boolean
+  iaChild6 Boolean
+  iaChild7 Boolean
+  iaChild8 Boolean
+  iaChild9 Boolean
+
+  // Hyperactivity/Impulsivity – adulthood (9 criteria)
+  hiAdult1 Boolean
+  hiAdult2 Boolean
+  hiAdult3 Boolean
+  hiAdult4 Boolean
+  hiAdult5 Boolean
+  hiAdult6 Boolean
+  hiAdult7 Boolean
+  hiAdult8 Boolean
+  hiAdult9 Boolean
+
+  // Hyperactivity/Impulsivity – childhood (9 criteria)
+  hiChild1 Boolean
+  hiChild2 Boolean
+  hiChild3 Boolean
+  hiChild4 Boolean
+  hiChild5 Boolean
+  hiChild6 Boolean
+  hiChild7 Boolean
+  hiChild8 Boolean
+  hiChild9 Boolean
+
+  // Counts
+  iaAdultCount Int
+  iaChildCount Int
+  hiAdultCount Int
+  hiChildCount Int
+
+  // Thresholds met
+  meetsIaAdult Boolean
+  meetsHiAdult Boolean
+  meetsIaChild Boolean
+  meetsHiChild Boolean
+
+  diagnosis String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: CAARS ──────────────────────────────────────────────────────────────
+
+model TestCaars {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // T-scores entered by clinician
+  inattentionT      Int
+  hyperactivityT    Int
+  impulsivityT      Int
+  selfConceptT      Int
+  dsmInattentionT   Int
+  dsmHyperactivityT Int
+  adhdIndexT        Int
+
+  // Classifications per subscale
+  inattentionClass      String
+  hyperactivityClass    String
+  impulsivityClass      String
+  selfConceptClass      String
+  dsmInattentionClass   String
+  dsmHyperactivityClass String
+  adhdIndexClass        String
+
+  interpretation String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: CTP ────────────────────────────────────────────────────────────────
+
+model TestCtp {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  hits         Int
+  omissions    Int
+  commissions  Int
+  totalTargets Int
+  meanHitRT    Float
+  hitRTse      Float
+
+  hitRate        Float
+  omissionRate   Float
+  commissionRate Float
+
+  hitRateClass   String
+  rtClass        String
+  variabilityClass String
+
+  interpretation String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: WCST ───────────────────────────────────────────────────────────────
+
+model TestWcst {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  totalTrials              Int
+  totalCorrect             Int
+  totalErrors              Int
+  perseverativeResponses   Int
+  perseverativeErrors      Int
+  nonPerseverativeErrors   Int
+  conceptualLevelResponses Int
+  categoriesCompleted      Int
+  trialsFirstCategory      Int?
+  failureMaintainSet       Int
+
+  perseverativeErrorsPct Float
+  conceptualLevelPct     Float
+
+  perseverativeClass String
+  categoriesClass    String
+  errorsClass        String
+
+  interpretation String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: Torre de Londres ───────────────────────────────────────────────────
+
+model TestTorreLondres {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  totalProblems      Int
+  correctSolutions   Int
+  ruleViolations     Int
+  totalMoves         Int
+  meanInitiationTime Float
+  meanExecutionTime  Float
+  totalTime          Float
+
+  accuracyPct     Float
+  totalScoreClass String
+  executionClass  String
+
+  interpretation String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: MFFT-BR ────────────────────────────────────────────────────────────
+
+model TestMfft {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  totalErrors      Int
+  meanLatency      Float
+  impulsivityIndex Float
+
+  classification String
+  interpretation String
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt

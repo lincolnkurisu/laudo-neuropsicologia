@@ -91,6 +91,7 @@ const KEYWORDS = {
     "organização", "organizacao", "planejamento", "planejar", "flexibilidade",
     "inibição", "iniciar tarefa", "procrastinação", "procrastinacao",
     "desorganizado", "dificuldade para planejar", "sequência", "sequencia",
+    "funções executivas", "funcoes executivas", "perseveração", "perseveracao",
   ],
   linguagem: [
     "linguagem", "fala", "palavra", "nomeação", "nomeacao", "afasia",
@@ -105,6 +106,16 @@ const KEYWORDS = {
   visuoespacial: [
     "visual", "visuoespacial", "espacial", "desenho", "figura",
     "construção", "construcao", "cópia", "copia", "percepção visual",
+  ],
+  impulsividade: [
+    "impulsiv", "impulsivo", "impulsividade", "agir sem pensar", "precipitado",
+    "sem controle", "reatividade", "explosiv", "temperamento explosivo",
+    "tomar decisões rápidas", "decisao rapida",
+  ],
+  atencaoSustentada: [
+    "atenção sustentada", "atencao sustentada", "manter atenção", "manter atencao",
+    "vigil", "vigilância", "vigilancia", "cansaço mental", "cansaco mental",
+    "fadiga cognitiva", "concentra por pouco tempo",
   ],
 };
 
@@ -125,18 +136,20 @@ export function getTestRecommendations(
     anamnesis.behaviorDuringSession,
   ];
 
-  const hasMemoria       = matchAll(allFields, KEYWORDS.memoria);
-  const hasDemencia      = matchAll(allFields, KEYWORDS.demencia);
-  const hasAtencao       = matchAll(allFields, KEYWORDS.atencao);
-  const hasTdah          = matchAll(allFields, KEYWORDS.tdah);
-  const hasDepressao     = matchAll(allFields, KEYWORDS.depressao);
-  const hasAnsiedade     = matchAll(allFields, KEYWORDS.ansiedade);
-  const hasAprendizagem  = matchAll(allFields, KEYWORDS.aprendizagem);
-  const hasInteligencia  = matchAll(allFields, KEYWORDS.inteligencia);
-  const hasExecutivo     = matchAll(allFields, KEYWORDS.executivo);
-  const hasLinguagem     = matchAll(allFields, KEYWORDS.linguagem);
-  const hasPersonalidade = matchAll(allFields, KEYWORDS.personalidade);
-  const hasVisuoespacial = matchAll(allFields, KEYWORDS.visuoespacial);
+  const hasMemoria           = matchAll(allFields, KEYWORDS.memoria);
+  const hasDemencia          = matchAll(allFields, KEYWORDS.demencia);
+  const hasAtencao           = matchAll(allFields, KEYWORDS.atencao);
+  const hasTdah              = matchAll(allFields, KEYWORDS.tdah);
+  const hasDepressao         = matchAll(allFields, KEYWORDS.depressao);
+  const hasAnsiedade         = matchAll(allFields, KEYWORDS.ansiedade);
+  const hasAprendizagem      = matchAll(allFields, KEYWORDS.aprendizagem);
+  const hasInteligencia      = matchAll(allFields, KEYWORDS.inteligencia);
+  const hasExecutivo         = matchAll(allFields, KEYWORDS.executivo);
+  const hasLinguagem         = matchAll(allFields, KEYWORDS.linguagem);
+  const hasPersonalidade     = matchAll(allFields, KEYWORDS.personalidade);
+  const hasVisuoespacial     = matchAll(allFields, KEYWORDS.visuoespacial);
+  const hasImpulsividade     = matchAll(allFields, KEYWORDS.impulsividade);
+  const hasAtencaoSustentada = matchAll(allFields, KEYWORDS.atencaoSustentada);
 
   const isIdoso   = age >= 60;
   const isAdolesc = age < 18;
@@ -262,6 +275,66 @@ export function getTestRecommendations(
   }
   if (hasDepressao || hasAnsiedade) {
     add("testBfp", "BFP", "bfp", "opcional", "Perfil de personalidade pode contextualizar vulnerabilidades emocionais");
+  }
+
+  // ── DIVA 2.0 ───────────────────────────────────────────────────────────
+  if (hasTdah) {
+    add("testDiva2", "DIVA 2.0", "diva2", "essencial", "Suspeita de TDAH — entrevista diagnóstica estruturada com critérios DSM-5 para infância e vida adulta");
+  }
+  if (hasAtencao && !isIdoso) {
+    add("testDiva2", "DIVA 2.0", "diva2", "recomendado", "Queixa atencional em adulto — investigar TDAH com entrevista estruturada");
+  }
+  if (hasImpulsividade && !isIdoso) {
+    add("testDiva2", "DIVA 2.0", "diva2", "recomendado", "Queixa de impulsividade — rastreio de TDAH com entrevista DIVA");
+  }
+
+  // ── CAARS ──────────────────────────────────────────────────────────────
+  if (hasTdah) {
+    add("testCaars", "CAARS", "caars", "essencial", "Suspeita de TDAH — escala de autorrelato multidimensional com normas para adultos");
+  }
+  if (hasAtencao && !isIdoso) {
+    add("testCaars", "CAARS", "caars", "recomendado", "Queixa atencional — CAARS quantifica subtipos e gravidade dos sintomas");
+  }
+
+  // ── CTP ────────────────────────────────────────────────────────────────
+  if (hasAtencaoSustentada || hasTdah) {
+    add("testCtp", "CTP", "ctp", "essencial", "Avaliação objetiva da atenção sustentada e controle inibitório por medida de desempenho");
+  }
+  if (hasAtencao && !isIdoso) {
+    add("testCtp", "CTP", "ctp", "recomendado", "Complementa avaliação atencional com medida de vigilância contínua");
+  }
+
+  // ── WCST ───────────────────────────────────────────────────────────────
+  if (hasExecutivo) {
+    add("testWcst", "WCST", "wcst", "essencial", "Queixa executiva — avalia flexibilidade cognitiva e perseveração");
+  }
+  if (hasTdah || hasAtencao) {
+    add("testWcst", "WCST", "wcst", "recomendado", "Complementa investigação de TDAH/atenção com medida de flexibilidade cognitiva");
+  }
+  if (hasDemencia || isIdoso) {
+    add("testWcst", "WCST", "wcst", "recomendado", "Sensível a déficits de funções executivas em quadros demenciais");
+  }
+
+  // ── Torre de Londres ───────────────────────────────────────────────────
+  if (hasExecutivo) {
+    add("testTorreLondres", "Torre de Londres", "torre-londres", "essencial", "Avalia planejamento, resolução de problemas e eficiência executiva");
+  }
+  if (hasTdah) {
+    add("testTorreLondres", "Torre de Londres", "torre-londres", "recomendado", "Planejamento e controle inibitório frequentemente comprometidos no TDAH");
+  }
+  if (hasAprendizagem) {
+    add("testTorreLondres", "Torre de Londres", "torre-londres", "recomendado", "Dificuldades escolares podem refletir déficits de planejamento executivo");
+  }
+
+  // ── MFFT-BR ────────────────────────────────────────────────────────────
+  if (hasImpulsividade || hasTdah) {
+    add("testMfft", "MFFT-BR", "mfft", "essencial", "Avalia estilo cognitivo impulsivo vs. reflexivo e tempo de resposta");
+  }
+  if (hasAprendizagem) {
+    add("testMfft", "MFFT-BR", "mfft", "recomendado", "Impulsividade cognitiva pode impactar aprendizagem e rendimento escolar");
+  }
+  if (hasAtencao && !isIdoso) {
+    add("testMfft", "MFFT-BR", "mfft", "recomendado", "Complementa avaliação de controle inibitório em queixas atencionais");
   }
 
   // ── Regras gerais ──────────────────────────────────────────────────────
