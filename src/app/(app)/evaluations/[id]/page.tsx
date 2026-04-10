@@ -34,6 +34,7 @@ const TESTS = [
   { key: "testCaars",        label: "CAARS",           slug: "caars",         description: "Conners' Adult ADHD Rating Scales",                    group: "TDAH" },
   { key: "testMfft",         label: "MFFT-BR",         slug: "mfft",          description: "Matching Familiar Figures Test — impulsividade",       group: "TDAH" },
   { key: "testBfp",          label: "BFP",             slug: "bfp",           description: "Bateria Fatorial de Personalidade",                    group: "Personalidade" },
+  { key: "testFauxPas",      label: "Faux Pas",        slug: "fauxpas",       description: "Teste de Teoria da Mente e Cognição Social",            group: "Cognição Social" },
 ] as const;
 
 const PRIORITY_CONFIG = {
@@ -95,6 +96,7 @@ export default async function EvaluationPage({ params }: Props) {
       testWcst:         { select: { id: true } },
       testTorreLondres: { select: { id: true } },
       testMfft:         { select: { id: true } },
+      testFauxPas:      { select: { id: true } },
     },
   });
 
@@ -217,7 +219,7 @@ export default async function EvaluationPage({ params }: Props) {
           </div>
 
           {/* Lista de testes agrupados */}
-          {(["Cognitivo", "Memória", "Atenção", "Executivo", "Linguagem", "Humor", "TDAH", "Personalidade"] as const).map((group) => {
+          {(["Cognitivo", "Memória", "Atenção", "Executivo", "Linguagem", "Humor", "TDAH", "Personalidade", "Cognição Social"] as const).map((group) => {
             const groupTests = TESTS.filter((t) => t.group === group);
             return (
               <div key={group} className="space-y-1.5">

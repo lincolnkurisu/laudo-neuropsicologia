@@ -117,6 +117,13 @@ const KEYWORDS = {
     "vigil", "vigilância", "vigilancia", "cansaço mental", "cansaco mental",
     "fadiga cognitiva", "concentra por pouco tempo",
   ],
+  cognicaoSocial: [
+    "teoria da mente", "cognição social", "cognicao social", "empatia", "empático",
+    "dificuldade social", "relacionamento social", "autismo", "tea", "asperger",
+    "faux pas", "gafe", "social", "reconhecer emoções", "reconhecer emocoes",
+    "leitura facial", "expressão facial", "intencao", "intenção",
+    "dificuldade de perceber", "não percebe", "nao percebe",
+  ],
 };
 
 // ─── Engine de recomendação ───────────────────────────────────────────────────
@@ -150,6 +157,7 @@ export function getTestRecommendations(
   const hasVisuoespacial     = matchAll(allFields, KEYWORDS.visuoespacial);
   const hasImpulsividade     = matchAll(allFields, KEYWORDS.impulsividade);
   const hasAtencaoSustentada = matchAll(allFields, KEYWORDS.atencaoSustentada);
+  const hasCognicaoSocial    = matchAll(allFields, KEYWORDS.cognicaoSocial);
 
   const isIdoso   = age >= 60;
   const isAdolesc = age < 18;
@@ -335,6 +343,17 @@ export function getTestRecommendations(
   }
   if (hasAtencao && !isIdoso) {
     add("testMfft", "MFFT-BR", "mfft", "recomendado", "Complementa avaliação de controle inibitório em queixas atencionais");
+  }
+
+  // ── Faux Pas ───────────────────────────────────────────────────────────
+  if (hasCognicaoSocial) {
+    add("testFauxPas", "Faux Pas", "fauxpas", "essencial", "Queixa de cognição social / empatia — avalia Teoria da Mente e reconhecimento de situações sociais inadequadas");
+  }
+  if (hasTdah || hasPersonalidade) {
+    add("testFauxPas", "Faux Pas", "fauxpas", "recomendado", "Cognição social pode estar comprometida em TDAH e transtornos de personalidade");
+  }
+  if (hasExecutivo) {
+    add("testFauxPas", "Faux Pas", "fauxpas", "opcional", "Funções executivas e cognição social frequentemente co-ocorrem em quadros frontais");
   }
 
   // ── Regras gerais ──────────────────────────────────────────────────────

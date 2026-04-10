@@ -147,6 +147,7 @@ model Evaluation {
   testWcst         TestWcst?
   testTorreLondres TestTorreLondres?
   testMfft         TestMfft?
+  testFauxPas      TestFauxPas?
   images           EvaluationImage[]
 
   @@index([userId])
@@ -728,6 +729,31 @@ model TestMfft {
 
   classification String
   interpretation String
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Test: Faux Pas ───────────────────────────────────────────────────────────
+
+model TestFauxPas {
+  id           String     @id @default(cuid())
+  evaluationId String     @unique
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  // Histórias com faux pas (10 histórias)
+  detectionScore    Int   // 0-10: detectou corretamente o faux pas
+  understandingScore Int  // 0-10: compreendeu o motivo do faux pas
+  empathyScore      Int   // 0-10: atribuiu o estado mental correto
+
+  // Histórias controle (10 histórias sem faux pas)
+  controlScore      Int   // 0-10: identificou corretamente que NÃO há faux pas
+
+  totalScore        Int   // soma total (0-40)
+  fauxPasIndex     Float  // (detection+understanding+empathy)/30*100 — índice de ToM
+
+  classification    String
+  interpretation    String
 
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
