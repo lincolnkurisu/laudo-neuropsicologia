@@ -39,11 +39,12 @@ interface ChecklistSectionProps {
   criteria: string[];
   values: boolean[];
   onChange: (index: number, checked: boolean) => void;
+  threshold?: number;
 }
 
-function ChecklistSection({ title, description, criteria, values, onChange }: ChecklistSectionProps) {
+function ChecklistSection({ title, description, criteria, values, onChange, threshold = 5 }: ChecklistSectionProps) {
   const count = values.filter(Boolean).length;
-  const meetsCriteria = count >= 5;
+  const meetsCriteria = count >= threshold;
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -105,10 +106,11 @@ function Diva2Form() {
   const hiAdultCount = hiAdult.filter(Boolean).length;
   const hiChildCount = hiChild.filter(Boolean).length;
 
+  // DSM-5: adultos ≥17 anos precisam de ≥5 critérios; infância sempre ≥6
   const meetsIaAdult = iaAdultCount >= 5;
-  const meetsIaChild = iaChildCount >= 5;
+  const meetsIaChild = iaChildCount >= 6;
   const meetsHiAdult = hiAdultCount >= 5;
-  const meetsHiChild = hiChildCount >= 5;
+  const meetsHiChild = hiChildCount >= 6;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,9 +159,9 @@ function Diva2Form() {
         <div className="grid grid-cols-2 gap-3">
           {[
             { label: "Desatenção (adulto)", count: iaAdultCount, meets: meetsIaAdult, threshold: "≥5" },
-            { label: "Desatenção (infância)", count: iaChildCount, meets: meetsIaChild, threshold: "≥5" },
+            { label: "Desatenção (infância)", count: iaChildCount, meets: meetsIaChild, threshold: "≥6" },
             { label: "Hiperatv./Impuls. (adulto)", count: hiAdultCount, meets: meetsHiAdult, threshold: "≥5" },
-            { label: "Hiperatv./Impuls. (infância)", count: hiChildCount, meets: meetsHiChild, threshold: "≥5" },
+            { label: "Hiperatv./Impuls. (infância)", count: hiChildCount, meets: meetsHiChild, threshold: "≥6" },
           ].map(({ label, count, meets, threshold }) => (
             <div key={label} className="rounded-md border p-2.5 text-center">
               <p className="text-[10px] text-muted-foreground leading-tight mb-1">{label}</p>
@@ -205,10 +207,11 @@ function Diva2Form() {
 
         <ChecklistSection
           title="Desatenção — Infância (antes dos 12 anos)"
-          description="Marque os critérios presentes antes dos 12 anos (≥5)"
+          description="Marque os critérios presentes antes dos 12 anos (≥6 para infância)"
           criteria={IA_CRITERIA}
           values={iaChild}
           onChange={(i, v) => toggle(iaChild, setIaChild, i, v)}
+          threshold={6}
         />
 
         <ChecklistSection
@@ -221,10 +224,11 @@ function Diva2Form() {
 
         <ChecklistSection
           title="Hiperatividade/Impulsividade — Infância (antes dos 12 anos)"
-          description="Marque os critérios presentes antes dos 12 anos (≥5)"
+          description="Marque os critérios presentes antes dos 12 anos (≥6 para infância)"
           criteria={HI_CRITERIA}
           values={hiChild}
           onChange={(i, v) => toggle(hiChild, setHiChild, i, v)}
+          threshold={6}
         />
 
         {formError && <p className="text-sm text-destructive">{formError}</p>}
