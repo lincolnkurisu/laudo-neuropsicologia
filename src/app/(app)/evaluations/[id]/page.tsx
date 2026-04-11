@@ -51,7 +51,7 @@ export default async function EvaluationPage({ params }: Props) {
 
   const { id } = await params;
 
-  const ev = await prisma.evaluation.findFirst({
+  let ev = await prisma.evaluation.findFirst({
     where: { id, userId: session.user.id },
     include: {
       patient: {
@@ -98,7 +98,64 @@ export default async function EvaluationPage({ params }: Props) {
       testMfft:         { select: { id: true } },
       testFauxPas:      { select: { id: true } },
     },
-  });
+  }).catch(() => null);
+
+  // Fallback: query without newer tests if tables don't exist yet in the DB
+  if (ev === null) {
+    const base = await prisma.evaluation.findFirst({
+      where: { id, userId: session.user.id },
+      include: {
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            dateOfBirth: true,
+            educationLevel: true,
+            anamneses: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              select: {
+                mainComplaint: true,
+                complaintDuration: true,
+                medicalHistory: true,
+                learningDifficulties: true,
+                familyHistory: true,
+                currentMedications: true,
+                schoolHistory: true,
+                clinicalObservations: true,
+                behaviorDuringSession: true,
+                recentLifeEvents: true,
+              },
+            },
+          },
+        },
+        testAsrs18:   { select: { id: true } },
+        testBfp:      { select: { id: true } },
+        testBpa2:     { select: { id: true } },
+        testWasi:     { select: { id: true } },
+        testFdt:      { select: { id: true } },
+        testRavlt:    { select: { id: true } },
+        testMoca:     { select: { id: true } },
+        testBdi2:     { select: { id: true } },
+        testBai:      { select: { id: true } },
+        testTmt:      { select: { id: true } },
+        testRey:      { select: { id: true } },
+        testFluencia: { select: { id: true } },
+      },
+    });
+    if (base) {
+      ev = {
+        ...base,
+        testDiva2:        null,
+        testCaars:        null,
+        testCtp:          null,
+        testWcst:         null,
+        testTorreLondres: null,
+        testMfft:         null,
+        testFauxPas:      null,
+      };
+    }
+  }
 
   if (!ev) notFound();
 
