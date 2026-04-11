@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ── Mobile overlay ── */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden print:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -31,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         fixed inset-y-0 left-0 z-50
         transition-transform duration-300 ease-in-out
         lg:relative lg:translate-x-0 lg:z-auto
+        print:hidden
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         <Sidebar onClose={() => setSidebarOpen(false)} />

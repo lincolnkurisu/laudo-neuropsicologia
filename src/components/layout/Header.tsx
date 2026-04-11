@@ -43,7 +43,7 @@ export function Header({ onMenuOpen }: HeaderProps) {
 
   return (
     <header className="flex h-14 md:h-16 shrink-0 items-center justify-between
-                       border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 gap-3">
+                       border-b bg-white/80 backdrop-blur-sm px-4 md:px-6 gap-3 print:hidden">
 
       {/* ── Hamburger (mobile only) + Título ── */}
       <div className="flex items-center gap-3 min-w-0">
