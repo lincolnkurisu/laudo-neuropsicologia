@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle2, Circle, ChevronRight, ClipboardEdit, Lightbulb } from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, ClipboardEdit, Lightbulb, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { STATUS_CONFIG } from "@/lib/constants";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getTestRecommendations, type TestRecommendation } from "@/lib/recommendations";
+import { DeleteTestButton, DeleteEvaluationButton } from "./EvaluationActions";
 
 const TESTS = [
   // ── Cognitivo / Inteligência ──────────────────────────────────────────────
@@ -311,6 +312,13 @@ export default async function EvaluationPage({ params }: Props) {
                         <Badge variant={done ? "success" : "secondary"} className="text-[10px] hidden sm:inline-flex">
                           {done ? "Aplicado" : "Pendente"}
                         </Badge>
+                        {done && (
+                          <DeleteTestButton
+                            evaluationId={id}
+                            testKey={test.key}
+                            testLabel={test.label}
+                          />
+                        )}
                         <Button variant={done ? "outline" : "default"} size="sm" asChild className="h-7 text-xs px-2.5">
                           <Link href={`/evaluations/${id}/tests/${test.slug}`}>
                             <ClipboardEdit className="h-3 w-3 mr-1 sm:mr-1.5" />
@@ -328,15 +336,21 @@ export default async function EvaluationPage({ params }: Props) {
       </Card>
 
       {/* Ações */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-        <Button variant="outline" asChild className="w-full sm:w-auto">
-          <Link href={`/patients/${ev.patient.id}`}>Voltar ao Paciente</Link>
-        </Button>
-        {testsDone > 0 && (
-          <Button asChild className="w-full sm:w-auto">
-            <Link href={`/reports/${ev.id}`}>Gerar Laudo PDF</Link>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+          <Button variant="outline" asChild className="w-full sm:w-auto">
+            <Link href={`/patients/${ev.patient.id}`}>Voltar ao Paciente</Link>
           </Button>
-        )}
+          <Button asChild className="w-full sm:w-auto gap-2">
+            <Link href={`/reports/${ev.id}`}>
+              <FileText className="h-4 w-4" />
+              Gerar Laudo PDF
+            </Link>
+          </Button>
+        </div>
+        <div className="flex sm:justify-end">
+          <DeleteEvaluationButton evaluationId={id} patientId={ev.patient.id} />
+        </div>
       </div>
     </div>
   );

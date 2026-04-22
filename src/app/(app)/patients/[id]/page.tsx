@@ -12,6 +12,7 @@ import { EDUCATION_LABELS, GENDER_LABELS } from "@/types";
 import { STATUS_CONFIG } from "@/lib/constants";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { PatientDeleteButton } from "./PatientDeleteButton";
 
 interface PatientPageProps {
   params: Promise<{ id: string }>;
@@ -61,12 +62,15 @@ export default async function PatientPage({ params }: PatientPageProps) {
             </p>
           </div>
         </div>
-        <Button asChild className="shrink-0 w-full sm:w-auto">
-          <Link href={`/evaluations/new?patientId=${patient.id}`}>
-            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-            Nova Avaliação
-          </Link>
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <PatientDeleteButton patientId={patient.id} />
+          <Button asChild className="shrink-0 w-full sm:w-auto">
+            <Link href={`/evaluations/new?patientId=${patient.id}`}>
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+              Nova Avaliação
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="profile">
