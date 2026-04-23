@@ -36,7 +36,7 @@ function TestBlock({ title, description, children }: { title: string; descriptio
     <div className="mb-5 break-inside-avoid">
       <h4 className="text-sm font-bold text-gray-800 mb-0.5">{title}</h4>
       {description && <p className="text-[11px] text-gray-500 mb-2">{description}</p>}
-      <table className="w-full">{children}</table>
+      <table className="w-full"><tbody>{children}</tbody></table>
     </div>
   );
 }
@@ -207,12 +207,14 @@ function renderReport(ev: EvalWithTests, psychologistName: string) {
         {/* Identification */}
         <Section title="Dados de Identificação">
           <table className="w-full">
-            <Row label="Paciente"      value={patient.fullName} />
-            <Row label="Data de Nasc." value={patient.dateOfBirth ? formatDate(patient.dateOfBirth) : undefined} />
-            <Row label="Idade"         value={age !== null ? `${age} anos` : undefined} />
-            <Row label="Escolaridade"  value={patient.educationLevel ?? undefined} />
-            <Row label="Avaliação"     value={ev.title} />
-            <Row label="Data de Início" value={formatDate(ev.createdAt)} />
+            <tbody>
+              <Row label="Paciente"      value={patient.fullName} />
+              <Row label="Data de Nasc." value={patient.dateOfBirth ? formatDate(patient.dateOfBirth) : undefined} />
+              <Row label="Idade"         value={age !== null ? `${age} anos` : undefined} />
+              <Row label="Escolaridade"  value={patient.educationLevel ?? undefined} />
+              <Row label="Avaliação"     value={ev.title} />
+              <Row label="Data de Início" value={formatDate(ev.createdAt)} />
+            </tbody>
           </table>
         </Section>
 
