@@ -105,6 +105,7 @@ export default function RavltPage() {
         return;
       }
 
+      router.refresh();
       router.push(`/evaluations/${id}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
